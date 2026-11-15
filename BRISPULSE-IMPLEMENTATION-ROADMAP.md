@@ -9,8 +9,8 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | Milestone | Status | Notes |
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
-| M1 Architecture Validation | **Proposed — awaiting owner approval** | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 lists the decisions |
-| M2 Data Pipeline and Backend | Not started | Blocked on M1 approval and a hosting decision |
+| M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
+| M2 Data Pipeline and Backend | Not started — ready to begin | M2.1–M2.5 run locally; M2.6 (deployment) is blocked on the hosting decision |
 | M3 Mobility Monitoring Dashboard | Not started | |
 | M4 Mobility Analytics | Not started | Needs collected history from M2 |
 | M5 Production Readiness and Deployment | Not started | |
@@ -24,13 +24,14 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] MVP requirements proposed
 - [x] Handoff written
 
-## M1 — Architecture Validation (awaiting approval)
+## M1 — Architecture Validation (done)
 - [x] M0 findings re-checked on a second live snapshot; corrections recorded (Architecture §2)
 - [x] Open hypotheses tested: future-trip delay bias, replacement trips, TLS failure, static processing cost
 - [x] Process model, stack, storage, data model, API contract, freshness and failure rules defined
 - [x] Metric definitions revised
-- [ ] **Owner approval of decisions A1–A7**
-- [ ] Hosting provider and budget chosen (A5)
+- [x] Owner approval of A1–A4 and A7 (2026-11-16): FastAPI + PostgreSQL, single process, starting thresholds, candidate features, monorepo layout
+- [ ] A5 Hosting provider and budget — **open, owner to decide** (needed before M2.6)
+- [ ] A6 Contact TransLink — **open, owner action** (needed before public launch)
 
 ## M2 — Data Pipeline and Backend (planned; detail in Architecture §14)
 - [ ] M2.1 Project skeleton, CI, container, migrations
@@ -44,7 +45,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.
 
 ## Open owner actions
-- Approve or amend Architecture §13 (A1–A7).
-- Choose hosting and a monthly budget.
-- Email `translink.opendata@tmr.qld.gov.au` about contact details and attribution wording before public launch.
+- **A5 — Choose hosting and a monthly budget.** Needed before M2.6. Requirements: an always-on container that does not sleep when idle, about 512 MB RAM, PostgreSQL with at least 1 GB. Current prices were not verified.
+- **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
+- Revisit the metric thresholds after the first week of collected data (A3).
 - Update the portfolio page, which still describes the earlier event-day concept.

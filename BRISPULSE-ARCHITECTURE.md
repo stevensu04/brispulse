@@ -3,7 +3,7 @@
 **Phase:** M1 — Architecture Validation
 **Author:** Fable 5.2
 **Date:** 2026-11-16
-**Status:** **PROPOSED — awaiting product-owner approval.** No implementation starts until §13 is approved (Master Plan §8, M1 acceptance).
+**Status:** **APPROVED by the product owner on 2026-11-16**, with two items left open: hosting and budget (A5) and contacting TransLink (A6). See §13.
 
 Inputs: [Master Plan](BRISPULSE-MASTER-PLAN.md) · [Audit](BRISPULSE-REPOSITORY-AUDIT.md) · [Data research](BRISPULSE-DATA-SOURCE-RESEARCH.md) · [Metrics](BRISPULSE-METRICS-FEASIBILITY.md) · [MVP requirements](BRISPULSE-MVP-REQUIREMENTS.md) · [Handoff](BRISPULSE-TECHNICAL-HANDOFF.md)
 
@@ -287,19 +287,21 @@ One Docker image (multi-stage: build the web app, then the Python service). Conf
 
 **Hosting is not decided.** I could not confirm current prices: third-party comparisons from 2026 disagree, and vendor pricing pages were not read. The owner's earlier plan named Railway or Fly.io; both offer always-on containers. A free serverless database that suspends when idle may not suit a writer that never stops; check the plan's compute-hour limit. This needs a decision and a budget from the owner (§13).
 
-## 13. Decisions needing owner approval
+## 13. Owner decisions
 
-| ID | Decision | Recommendation |
+Decided by the product owner on 2026-11-16.
+
+| ID | Decision | Outcome |
 | --- | --- | --- |
-| A1 | Backend stack | FastAPI + PostgreSQL as above (Django two-process is the fallback) |
-| A2 | Single always-on process, live state in memory | Approve |
-| A3 | Metric definitions and thresholds in §6 and §7 | Approve as starting values; revise after one week of collected data |
-| A4 | C1 include · C2 as labelled delay bands · C3 defer · C4 filters | Approve |
-| A5 | Hosting provider and monthly budget | Owner to choose; requirements in §12 |
-| A6 | Contact TransLink about contact details and attribution | Owner action, before public launch |
-| A7 | Monorepo layout: `backend/`, `frontend/`, `docs/`, `discovery/` in this repository | Approve |
+| A1 | Backend stack | **Approved:** FastAPI + PostgreSQL |
+| A2 | Single always-on process, live state in memory | **Approved** |
+| A3 | Metric definitions and thresholds in §6 and §7 | **Approved as starting values;** to be revised after one week of collected data |
+| A4 | C1 include · C2 as labelled delay bands · C3 defer · C4 filters | **Approved** |
+| A5 | Hosting provider and monthly budget | **Open.** Owner to decide later. Blocks only M2.6 (deployment); M2.1–M2.5 run locally. Requirements in §12 |
+| A6 | Contact TransLink about contact details and attribution | **Open.** Owner action, required before public launch |
+| A7 | Monorepo layout: `backend/`, `frontend/`, `docs/`, `discovery/` in this repository | **Approved** |
 
-## 14. M2 plan (after approval)
+## 14. M2 plan
 
 | Step | Deliverable | Done when |
 | --- | --- | --- |

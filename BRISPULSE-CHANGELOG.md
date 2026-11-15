@@ -4,8 +4,12 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### M1 — Architecture approved
+- The product owner approved the architecture: FastAPI + PostgreSQL, a single always-on process, the starting metric thresholds, the candidate features and the monorepo layout.
+- Left open: hosting and budget (A5), and contacting TransLink (A6).
+
 ### M1 — Architecture proposed (Fable 5.2)
-- Added `BRISPULSE-ARCHITECTURE.md` (status: proposed, awaiting owner approval).
+- Added `BRISPULSE-ARCHITECTURE.md`.
 - Added `BRISPULSE-IMPLEMENTATION-ROADMAP.md`, this changelog and a README.
 - Added probes `m1_verify.py`, `m1_population.py`, `m1_static_cost.py`.
 - Corrections to M0 findings, from a second live snapshot (09:03 AEST):
