@@ -4,6 +4,10 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### M1 — Post-approval review (Fable 5.2)
+- Added a third live snapshot (09:17 AEST) to the architecture's validation section; figures were consistent with the first two.
+- Added a self-review of weaknesses and gaps (no database backup plan, no notification when the collector stops, unspecified rate limiting, undecided map tiles) and a list of what is preserved from the original concept.
+
 ### M1 — Architecture approved
 - The product owner approved the architecture: FastAPI + PostgreSQL, a single always-on process, the starting metric thresholds, the candidate features and the monorepo layout.
 - Left open: hosting and budget (A5), and contacting TransLink (A6).

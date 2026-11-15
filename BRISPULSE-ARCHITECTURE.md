@@ -53,6 +53,25 @@ I re-ran M0's probes on its saved 08:41 snapshot and on a new snapshot taken at 
 - **[V] A naive "on-time" share would look alarming:** with a −60 s…+300 s band, 60–64 % of running trips were "on time" (bus 57–63 %, rail 86–88 %). Mid-trip predicted delay at an arbitrary stop is not how operators measure punctuality, so this number must never be labelled on-time performance (§6.4).
 - **[V] Official comparison data exists:** the Queensland open-data catalogue has "Translink monthly performance data" (22 CSV resources, including Citytrain and tram punctuality; licence CC BY 3.0). Its contents were not read. TransLink's exact on-time thresholds were **not** found.
 
+### 2.4 Third snapshot (09:17 AEST) — independent re-measurement
+Taken after approval, to check the figures above against a third moment **[V]**:
+
+| Measure | 08:41 | 09:03 | 09:17 |
+| --- | --- | --- | --- |
+| Scheduled in-progress trips with a TripUpdate | 92.8 % | not run | 93.5 % (962 of 1,029) |
+| … with a VehiclePosition | 91.5 % | not run | 92.0 % (947 of 1,029) |
+| Running trips (definition in §6.1) | 1,222 | 1,068 | 992 |
+| Median predicted next-stop delay, running trips | 118 s | 118 s | 95 s |
+| p90 | 514 s | 501 s | 447 s |
+| Share within −60…+300 s | 59.7 % | 64.4 % | 67.7 % |
+| Running trips beyond ±30 min | 8 | 7 | 10 |
+
+- Update cadence, my own 75 s run: header timestamps changed every 10–20 s on all three feeds, with one **30 s** gap on VehiclePositions. M0 saw 10–20 s. So a 30 s upstream gap does occur.
+- `predicted time − delay` matched the static schedule exactly for 99.8 % of 76,439 events, the same as M0.
+- The static zip was unchanged.
+
+All three snapshots fall within 36 minutes of one Monday morning peak. They agree with each other; they say nothing about off-peak, night, weekend or disrupted conditions.
+
 ## 3. System overview
 
 ```mermaid
@@ -331,3 +350,42 @@ Decided by the product owner on 2026-11-16.
 4. How often the static zip is republished and whether IDs break at the switch.
 5. Cause of the remaining ±30 min+ predictions on running trips (≈0.7 %).
 6. Real memory footprint and database growth of the running service.
+
+## 17. Review of this architecture: weaknesses and missing pieces
+
+A critical pass over the design above, written after approval. Items marked **Gap** are not yet covered anywhere and need a decision or a task.
+
+| # | Weakness | Type | Proposed handling |
+| --- | --- | --- | --- |
+| W1 | The evidence is three snapshots from 36 minutes of one weekday morning. Every threshold and volume estimate could be wrong for nights, weekends and disruptions. | Risk | The 24 h run (M2.3) and first-week review (M2.6) are mandatory gates, not optional |
+| W2 | **No backup or restore plan for PostgreSQL.** Collected history cannot be re-downloaded: upstream keeps none. | **Gap** | Add scheduled database dumps to M2.6 and test one restore; depends on the hosting choice (A5) |
+| W3 | **Nobody is told when the collector stops.** `/status` shows it, but only if someone looks. | **Gap** | Add an external uptime check on `/status` with a notification to the owner, in M2.6 |
+| W4 | Single process: a crash or deploy stops collection, and up to 5 minutes of per-trip samples are lost between checkpoints. | Accepted limit | Gaps are recorded as gaps; state the limit publicly |
+| W5 | Upstream gaps of 30 s were observed. With a 30 s poll, a vehicle position can be about 60 s old on arrival, leaving a thin margin under the 90 s `live` limit; the state may flicker between `live` and `delayed`. | Risk | Measure in M2.3; if it flickers, poll VehiclePositions every 15–20 s or add hysteresis |
+| W6 | A 60 s TripUpdates poll gives few observations for short trips, so a per-trip median can rest on one or two samples. | Risk | Require a minimum number of observations (3 **[P]**) before a trip enters route statistics; store the count (already in `trip_record`) |
+| W7 | `trip_record` is keyed by service date and trip ID. Whether trip IDs stay stable when the static feed is republished mid-day is unverified. | Assumption | Store the static version on each record (already planned); check at the first observed republish |
+| W8 | Retention deletes `trip_record` rows after 35 days. If the nightly rollup was wrong, the source is gone. | Risk | Rollup must be verified against raw rows in tests; delete only days whose rollup exists |
+| W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption | Measure in M2.3 and after one week |
+| W10 | **Rate limiting is unspecified.** A public, unauthenticated API can be scraped; only cache headers protect it. | **Gap** | Decide in M2.4: a simple per-IP limit in the app, or at the host's proxy |
+| W11 | The basemap tile provider is undecided; it is a third-party dependency with its own terms and limits. | **Gap** | Decide in M3 before building the map |
+| W12 | The web app is served from the same container, with no CDN. | Accepted limit | Fine at MVP traffic; can move to a static host later without API changes if CORS is enabled |
+| W13 | Several thresholds (delay bands, anomaly at 20 %, trend minimum of 7 days) are judgement calls. | Assumption | Kept in configuration and published in `/api/v1/meta/metrics`; reviewed after one week |
+| W14 | Real feed files used as test fixtures are TransLink data. | Compliance | Keep them small, attribute them in the repository, per CC BY 4.0 |
+| W15 | Accessibility and performance budgets are not designed here. | Deferred | M3 and M5 per the Master Plan |
+
+Alternatives are compared in §3.2. The one I would revisit first if hosting cost becomes the constraint is SQLite on a volume, which removes the managed-database cost at the price of in-SQL percentiles.
+
+## 18. What is preserved from existing work
+
+There was no application code to preserve (confirmed by the owner). What carries forward:
+
+| Item | Decision |
+| --- | --- |
+| Project name and public identity | Kept |
+| TransLink GTFS-Realtime as the primary data source (the original concept's first-listed source) | Kept; now the only source in the MVP |
+| Python as the backend language (the earlier "Django · Python · GTFS-Realtime" proposal) | Python kept; Django replaced by FastAPI for the reasons in §3.2 |
+| M0 documents | Kept unchanged as the discovery record; where M1 supersedes them, a note at the top of the document says so |
+| Probe scripts in `discovery/probes/` | Kept; they become the source of test fixtures and the re-validation tools for W1 |
+| Prototype screenshot's visual language (dark theme, status colours) | Design reference only; colours must be redefined for delay before reuse |
+| Spatial-pressure scoring, calmer-route recommendations, spatial-equity guardrails, Wi-Fi and gate-egress data | Not carried into the MVP (Master Plan §3.2; no verified data). Recorded as the project's origin, for the case study |
+| Portfolio page and `/world` scene in the resume repository | Untouched; to be updated by the owner's decision once there is something real to show |

@@ -39,7 +39,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [ ] M2.3 Collector with validation and freshness (24-hour live run)
 - [ ] M2.4 Live API
 - [ ] M2.5 Aggregator and history tables
-- [ ] M2.6 Early deployment of the collector; one-week data review
+- [ ] M2.6 Early deployment of the collector; one-week data review; database backups with a tested restore; external uptime check with owner notification (Architecture §17, W2 and W3)
 
 ## M3–M5
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.
