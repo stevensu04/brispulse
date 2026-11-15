@@ -7,6 +7,8 @@
 
 Legend: **[D]** documented by an official page or metadata · **[V]** verified live in this session by calling the endpoint · **[A]** assumption / not verified.
 
+> **M1 update (2026-11-16):** several open points below (future-trip delays, `REPLACEMENT` trips, cancellations, the TLS failure) were resolved or corrected in [`BRISPULSE-ARCHITECTURE.md`](BRISPULSE-ARCHITECTURE.md) §2. This document is kept as the M0 record.
+
 **Important limitation:** every [V] number below comes from a **single snapshot (plus a 75-second cadence test)**. It shows what is possible and what edge cases exist. It does not describe typical behaviour across days, weekends, outages or events. Fable should re-measure over a longer window in M1/M2.
 
 ---

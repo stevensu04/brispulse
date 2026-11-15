@@ -10,6 +10,8 @@ Verdicts: **Feasible** (data is available and the definition is sound) · **Feas
 
 Thresholds and definitions below are **proposals**. Decisions belong to M1.
 
+> **M1 update (2026-11-16):** the delay figures in M3 below are biased as suspected, and the metric definitions here are superseded by [`BRISPULSE-ARCHITECTURE.md`](BRISPULSE-ARCHITECTURE.md) §2 and §6. This document is kept as the M0 record.
+
 ---
 
 ## 1. Summary
