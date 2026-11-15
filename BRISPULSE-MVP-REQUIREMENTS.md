@@ -139,7 +139,7 @@ Priority: **M** must · **S** should · **C** could.
 | --- | --- | --- |
 | P1 | Confirm the pivot from the event-day pressure concept to the Mobility Intelligence direction as the public story | Before the portfolio page changes |
 | P2 | Approve or reject candidates C1–C4 | M1 |
-| P3 | Where the prototype source lives, if anywhere (audit Q1) | M1 |
+| P3 | ~~Where the prototype source lives~~ Answered: no code exists | Closed |
 | P4 | Hosting budget and preference (the owner's earlier plan named Railway/Fly.io; EventNow runs Django + HTMX on Vercel) | M1 |
 | P5 | Whether to register contact details and agree attribution wording with TransLink (`translink.opendata@tmr.qld.gov.au`) | Before public launch |
 | P6 | Whether to audit the DECO7380 reports for citeable user research | Optional |

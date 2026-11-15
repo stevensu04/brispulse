@@ -9,7 +9,7 @@ Master Plan §7.2 expects you to challenge these findings rather than accept the
 
 ## 1. State of the project
 
-- **There is no BrisPulse code.** Searched: the portfolio repo, the owner's GitHub account (12 repos, none named BrisPulse), and the local machine. The only artefacts are a portfolio case-study page, a screenshot of a mock-looking mobile UI, and a *proposed* Django/GTFS-R stack. M1 is greenfield.
+- **There is no BrisPulse code, confirmed by the owner: it was only ever a concept.** Searched: the portfolio repo, the owner's GitHub account (12 repos, none named BrisPulse), and the local machine. The only artefacts are a portfolio case-study page, a screenshot of a mock-looking mobile UI, and a *proposed* Django/GTFS-R stack. M1 is greenfield.
 - **The Master Plan is a change of direction** from the original event-day crowd-pressure concept to a transport-data Mobility Intelligence platform. The crowd-pressure data (Wi-Fi probes, gate egress) was never verified and is not in the MVP.
 - This repository (`brispulse/`, local folder `UQ NOTES/DECO7380/brispulse`) contains only the Master Plan, the five M0 documents and four probe scripts. **No application source code was created or modified.** The portfolio repository was not changed.
 
@@ -73,7 +73,7 @@ Stale vehicle timestamps up to 9,157 s in a fresh feed · TripUpdate entity time
 
 ## 8. Repository hygiene for M1
 
-- The Master Plan commit exists locally; the repository has **no remote yet**. The owner chose a new public GitHub repository; creating and pushing it is awaiting the owner's confirmation.
+- The repository is public at https://github.com/stevensu04/brispulse (`main`), created and pushed with the owner's approval on 2026-11-16.
 - Commits are authored only by the owner (`stevensu04`); no AI co-author trailers (owner's standing preference).
 - Raw feed data was not committed. Probe scripts are in `discovery/probes/`.
 - Open owner questions are consolidated in the [MVP requirements](BRISPULSE-MVP-REQUIREMENTS.md) §7 and the [Audit](BRISPULSE-REPOSITORY-AUDIT.md) §11.

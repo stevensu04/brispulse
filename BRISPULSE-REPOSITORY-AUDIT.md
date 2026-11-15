@@ -23,7 +23,7 @@ This matters because Master Plan §6.1 says "inspect the existing implementation
 | GitHub account `stevensu04` | `gh repo list stevensu04 --limit 100` | 12 repositories (public and private). None named BrisPulse or similar. The repository contents of the others were **not** inspected. |
 | Local machine | `find ~ -maxdepth 4 -iname "*brispulse*"` (excluding `node_modules`, `Library`) | Only files inside `UQ NOTES/DECO7380/` (reports and images) and the new empty working folder created for this plan. |
 
-**[A] Not ruled out:** prototype code could exist inside a repository I did not open (for example `VENTURES` or `deco7140-development`), on a team member's machine, or in a design tool (Figma, Lovable, etc.). The portfolio docs call it a "simple responsive prototype" (`PLAN.md:48`) and say it would be reused as the frontend (`PLAN.md:152`), so the owner may know where it lives. **Open question Q1 in §8.**
+**[V] Confirmed by the product owner (2026-11-16):** BrisPulse was only a concept and no code was ever written. The "simple responsive prototype" mentioned in `PLAN.md:48` and `PLAN.md:152` therefore refers to a design artefact, not source code, and cannot be reused as a frontend. Q1 is closed.
 
 ## 3. Inventory of BrisPulse references in the portfolio repo
 
@@ -97,7 +97,7 @@ For context only (**not** BrisPulse's stack): the portfolio site is Next.js 16.2
 | ID | Risk | Severity |
 | --- | --- | --- |
 | A-R1 | The Master Plan presumes an implementation that does not exist; scheduling assumptions that rely on reuse ("Existing responsive prototype as the frontend", `PLAN.md:152`) may not hold. | High |
-| A-R2 | The prototype's source may be lost or live elsewhere (Q1). | Medium |
+| A-R2 | ~~Prototype source may live elsewhere.~~ Closed: owner confirmed no code exists. | Closed |
 | A-R3 | Portfolio copy will conflict with the new direction until updated. | Medium (reputation) |
 | A-R4 | Colour semantics in the old UI mean crowd pressure; reusing them for delay data without redefinition would mislead. | Low |
 
@@ -105,7 +105,7 @@ For context only (**not** BrisPulse's stack): the portfolio site is Next.js 16.2
 
 | ID | Question |
 | --- | --- |
-| Q1 | Where is the prototype's source (if anywhere)? Is it in a repository I did not open, in a design tool, or only in the screenshot? |
+| Q1 | ~~Where is the prototype's source?~~ **Answered:** no code exists; concept only. |
 | Q2 | Should the DECO7380 reports be audited in a later pass so that user-research evidence can be cited in the case study? |
 | Q3 | Do you want the portfolio page and `/world` copy updated as soon as the repo is public, or after the MVP ships? |
 
