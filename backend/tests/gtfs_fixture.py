@@ -6,6 +6,7 @@ midnight. Tests override individual files to exercise failure cases.
 
 import io
 import zipfile
+from collections.abc import Mapping
 from pathlib import Path
 
 DEFAULT_FILES: dict[str, str] = {
@@ -56,7 +57,7 @@ DEFAULT_FILES: dict[str, str] = {
 }
 
 
-def build_zip_bytes(overrides: dict[str, str | None] | None = None) -> bytes:
+def build_zip_bytes(overrides: Mapping[str, str | None] | None = None) -> bytes:
     """Return a GTFS zip. ``overrides`` replaces a file's text, or removes it with None."""
     files: dict[str, str | None] = {**DEFAULT_FILES, **(overrides or {})}
     buffer = io.BytesIO()
@@ -67,10 +68,10 @@ def build_zip_bytes(overrides: dict[str, str | None] | None = None) -> bytes:
     return buffer.getvalue()
 
 
-def open_zip(overrides: dict[str, str | None] | None = None) -> zipfile.ZipFile:
+def open_zip(overrides: Mapping[str, str | None] | None = None) -> zipfile.ZipFile:
     return zipfile.ZipFile(io.BytesIO(build_zip_bytes(overrides)))
 
 
-def write_zip(path: Path, overrides: dict[str, str | None] | None = None) -> Path:
+def write_zip(path: Path, overrides: Mapping[str, str | None] | None = None) -> Path:
     path.write_bytes(build_zip_bytes(overrides))
     return path
