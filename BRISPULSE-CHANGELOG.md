@@ -4,6 +4,17 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### Scope change — live-only first release (owner's decision)
+- After comparing hosting costs, the product owner decided not to pay for hosting. The first release is a live dashboard on a free host; stored history, trends, daily route statistics and real-time coverage are out of it. Recorded as Amendment 1 in the Master Plan and as Architecture §19.
+- Added a live-only mode: with no `DATABASE_URL` the service runs without any database. It reads the schedule straight from TransLink's zip at start-up (only the three small files it needs), keeps everything in memory and stores nothing.
+- The service now starts answering at once and reports that it is loading; the collector begins polling as soon as the schedule is in memory instead of a full interval later.
+- `/api/v1/status` reports `history_enabled`; coverage in the overview is `null` with a note when no history is kept.
+- The container honours a `PORT` variable set by the host.
+- The history code from M2.5 is unchanged, tested and off; configuring a database turns it on.
+- Measured against live TransLink: all three feeds live 12.4 s after the process starts, about 150 MB of memory.
+- Tests: 382 in total.
+- Hosting prices read from the vendors' pages on 2026-11-16, for the record: Railway Hobby US$5/month including US$5 of usage (no Australian region); DigitalOcean 1 GB Droplet US$6/month (Sydney available); Fly.io shared-cpu-1x 512 MB US$3.69/month at its base region with a 1.269 multiplier in Sydney, managed Postgres from US$38/month, invoices under US$5 waived. Render's prices could not be read from its page.
+
 ### M2.5 — History (Fable 5.2)
 - Four new tables: `trip_record` (one row per trip per service day, summarising its delay observations), `network_sample` (network state every five minutes, per mode), `alert_record` (each alert's content and when it was seen; reworded alerts get a new row) and `route_day_stats` (per-route daily rollup).
 - The unit for route statistics is the trip: each trip contributes its own median delay, and only if it was observed at least three times. Percentiles need at least five trips.

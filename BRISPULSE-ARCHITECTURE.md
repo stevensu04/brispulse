@@ -3,7 +3,7 @@
 **Phase:** M1 — Architecture Validation
 **Author:** Fable 5.2
 **Date:** 2026-11-16
-**Status:** **APPROVED by the product owner on 2026-11-16**, with two items left open: hosting and budget (A5) and contacting TransLink (A6). See §13.
+**Status:** **APPROVED by the product owner on 2026-11-16.** Later the same day the owner decided to release a **live-only** version on free hosting, without stored history: see **§19**, which overrides the sections it names. Contacting TransLink (A6) is still open.
 
 Inputs: [Master Plan](BRISPULSE-MASTER-PLAN.md) · [Audit](BRISPULSE-REPOSITORY-AUDIT.md) · [Data research](BRISPULSE-DATA-SOURCE-RESEARCH.md) · [Metrics](BRISPULSE-METRICS-FEASIBILITY.md) · [MVP requirements](BRISPULSE-MVP-REQUIREMENTS.md) · [Handoff](BRISPULSE-TECHNICAL-HANDOFF.md)
 
@@ -316,7 +316,7 @@ Decided by the product owner on 2026-11-16.
 | A2 | Single always-on process, live state in memory | **Approved** |
 | A3 | Metric definitions and thresholds in §6 and §7 | **Approved as starting values;** to be revised after one week of collected data |
 | A4 | C1 include · C2 as labelled delay bands · C3 defer · C4 filters | **Approved** |
-| A5 | Hosting provider and monthly budget | **Open.** Owner to decide later. Blocks only M2.6 (deployment); M2.1–M2.5 run locally. Requirements in §12 |
+| A5 | Hosting provider and monthly budget | **Decided 2026-11-16: no paid hosting.** The first release is live-only on a free host that may sleep (§19). Which free host is still to be chosen |
 | A6 | Contact TransLink about contact details and attribution | **Open.** Owner action, required before public launch |
 | A7 | Monorepo layout: `backend/`, `frontend/`, `docs/`, `discovery/` in this repository | **Approved** |
 
@@ -389,3 +389,44 @@ There was no application code to preserve (confirmed by the owner). What carries
 | Prototype screenshot's visual language (dark theme, status colours) | Design reference only; colours must be redefined for delay before reuse |
 | Spatial-pressure scoring, calmer-route recommendations, spatial-equity guardrails, Wi-Fi and gate-egress data | Not carried into the MVP (Master Plan §3.2; no verified data). Recorded as the project's origin, for the case study |
 | Portfolio page and `/world` scene in the resume repository | Untouched; to be updated by the owner's decision once there is something real to show |
+
+## 19. Live-only deployment (owner decision, 2026-11-16)
+
+### 19.1 The decision
+After M2.5 the owner compared hosting costs (about US$5-8 a month for anything that stays on all day) and chose **not to pay for hosting**. The first release is therefore a live dashboard only. This is a change of MVP scope, recorded as Amendment 1 in the Master Plan.
+
+### 19.2 What it changes
+| Area | Approved design (§3-§7) | Live-only release |
+| --- | --- | --- |
+| Host | Always-on container | A free host that stops the service when idle and starts it on a visit |
+| Database | PostgreSQL | **None** |
+| Schedule | Imported into the database by a subprocess | Read straight from TransLink's zip at start-up, into memory |
+| Fetch log | One row per fetch | Not kept; failures still go to the process log |
+| History | Trip records, network samples, alerts, daily rollups | **Off** |
+| Real-time coverage | From each network sample | **Not available** (it needs trip time spans, which are not loaded) |
+| Trends, route statistics | Planned for M4 | **Out of the first release** |
+| Live monitoring: vehicles, running trips, predicted delay, alerts, freshness | As designed | **Unchanged** |
+
+### 19.3 How it works
+- The service decides its shape from configuration: with no `DATABASE_URL` it runs live-only; with one it runs the full design. No code is removed, so adding a database later restores history without a rewrite.
+- At start-up it downloads the schedule zip and reads only `routes.txt`, `stops.txt` and `trips.txt`. `stop_times.txt` (4.67 million rows) is never opened.
+- The HTTP application answers immediately and reports that it is loading; the collector looks for the schedule every 2 s and starts polling the moment it is there.
+- The API says what it is: `/api/v1/status` has `history_enabled: false`, and the overview's coverage is `null` with a note giving the reason.
+
+### 19.4 Measured (local machine against live TransLink, 2026-11-16 20:28 AEST)
+| From process start | Seconds |
+| --- | --- |
+| HTTP answering | 1.6 |
+| Schedule loaded (43 MB download, 553 routes, 13,125 stops, 173,183 trips) | 10.9 |
+| All three feeds live | 12.4 |
+
+Memory was about 150 MB. Run as the Docker image with a 256 MB memory limit, the service was live 5.7 s after the container started and used 106 MiB, so a 256 MB instance is enough. A free host's own wake-up time comes on top of this and has not been measured.
+
+### 19.5 Consequences and limits
+- **A visitor arriving after an idle period waits** for the host to wake and then about 12 s for data. The web app must show a clear "starting up" state (M3).
+- **Nothing accumulates.** No trends can ever be shown from this deployment, and the 24-hour live run planned in §14 does not apply.
+- **Polling only happens while the service is awake**, so TransLink is contacted only when someone is using the dashboard.
+- The schedule is downloaded on every start. If TransLink's file is unavailable at that moment, the dashboard stays in its loading state and retries every 30 s.
+- §17 items W2 (database backups) and W8 (retention) do not apply while there is no database. W3 (nobody is told when collection stops) matters less: there is no history to lose.
+- **Not yet chosen or verified:** which free host, its memory limit (the service needs about 150 MB), its wake-up time, and whether it has a region near Australia.
+

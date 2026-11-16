@@ -10,12 +10,14 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.5 done on branch `m2-data-pipeline` | Only M2.6 (deployment) and the 24-hour live run remain, and both need an always-on machine: **blocked on the hosting decision (A5)** |
+| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.5 and the live-only mode done on branch `m2-data-pipeline` | M2.6 is now "deploy live-only on a free host"; the free host is still to be chosen |
 | M3 Mobility Monitoring Dashboard | Not started | |
-| M4 Mobility Analytics | Not started | Needs collected history from M2 |
+| M4 Mobility Analytics | **Reduced** by the owner's decision of 2026-11-16 | Live figures (already in the API) stay. Trends and daily route statistics are out of the first release: they need stored history |
 | M5 Production Readiness and Deployment | Not started | |
 
-**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). **What does not exist yet:** the web app, analytics endpoints over the stored history, and any deployment. No history has accumulated: the service has only run for short tests on a developer's machine.
+**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). **What does not exist yet:** the web app and any deployment.
+
+**Scope change (owner's decision, 2026-11-16):** the first release is a live-only dashboard on free hosting, with no stored history. The service runs without a database in that mode. The history code stays in the repository, tested and switched off. See Architecture §19 and Amendment 1 in the Master Plan.
 
 ## M0 — Technical Discovery (done)
 - [x] Audit of the existing implementation: none exists; BrisPulse was a concept
@@ -30,7 +32,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] Process model, stack, storage, data model, API contract, freshness and failure rules defined
 - [x] Metric definitions revised
 - [x] Owner approval of A1–A4 and A7 (2026-11-16): FastAPI + PostgreSQL, single process, starting thresholds, candidate features, monorepo layout
-- [ ] A5 Hosting provider and budget — **open, owner to decide** (needed before M2.6)
+- [x] A5 Hosting and budget — decided 2026-11-16: no paid hosting; live-only release on a free host
 - [ ] A6 Contact TransLink — **open, owner action** (needed before public launch)
 
 ## M2 — Data Pipeline and Backend (in progress; detail in Architecture §14)
@@ -40,7 +42,9 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [ ] M2.3 24-hour live run against TransLink — **not done**; needs the service left running for a day, then a review of `feed_fetch`
 - [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
 - [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
-- [ ] M2.6 Early deployment of the collector; one-week data review; database backups with a tested restore; external uptime check with owner notification (Architecture §17, W2 and W3)
+- [x] Live-only mode (2026-11-16): the service runs with no database, reading the schedule straight from TransLink. Verified live: HTTP in 1.6 s, schedule in 10.9 s, all feeds live 12.4 s after start; about 150 MB of memory. The Docker image also ran within a 256 MB memory limit (106 MiB used)
+- [ ] M2.6 Deploy live-only on a free host. **Blocked on choosing the host.** Then measure its wake-up time and memory limit
+- [ ] ~~24-hour live run, one-week data review, database backups~~ — not applicable to a live-only release (Architecture §19.5)
 
 ### Measurements from M2.2 (one run, local machine)
 - Full import of the live file, including the 43 MB download: 32 s, about 240 MB peak memory.
@@ -76,7 +80,7 @@ The five-minute tick was shortened to one minute for this test, to see several c
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.
 
 ## Open owner actions
-- **A5 — Choose hosting and a monthly budget.** Needed before M2.6. Requirements: an always-on container that does not sleep when idle, about 512 MB RAM, PostgreSQL with at least 1 GB. Current prices were not verified.
+- **Choose the free host** for the live-only release. It must run a Docker container with at least about 256 MB of memory (the service uses about 150 MB) and no database. Candidates read on 2026-11-16: Render's free web service (sleeps after 15 minutes idle, about a minute to wake, nearest region Singapore; its memory limit was not readable from the pricing page) and Fly.io (Sydney region; no free tier, but invoices under US$5 are waived and a card is required). Neither has been tried.
 - **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
 - Revisit the metric thresholds after the first week of collected data (A3).
 - **Rate limiting** (Architecture W10): not built into the application. Responses are served from memory in milliseconds and carry cache headers; a per-IP limit belongs at the host's proxy, so it is decided together with hosting (A5).
