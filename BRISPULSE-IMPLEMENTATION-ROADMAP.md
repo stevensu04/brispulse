@@ -10,12 +10,12 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **In progress** — M2.1 and M2.2 done on branch `m2-data-pipeline` | M2.3 (collector) is next; M2.6 (deployment) is blocked on the hosting decision |
+| M2 Data Pipeline and Backend | **In progress** — M2.1, M2.2 and the M2.3 code done on branch `m2-data-pipeline` | M2.3's 24-hour live run is still to do; M2.4 (API) is next; M2.6 (deployment) is blocked on the hosting decision |
 | M3 Mobility Monitoring Dashboard | Not started | |
 | M4 Mobility Analytics | Not started | Needs collected history from M2 |
 | M5 Production Readiness and Deployment | Not started | |
 
-**What exists in code:** the backend skeleton and the static GTFS importer, with tests. **What does not exist yet:** real-time collection, the API beyond a liveness probe, history, the web app, and any deployment.
+**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. **What does not exist yet:** the API beyond a liveness probe, stored history and metrics, the web app, and any deployment. Collected data is held in memory and is not yet visible to a user.
 
 ## M0 — Technical Discovery (done)
 - [x] Audit of the existing implementation: none exists; BrisPulse was a concept
@@ -36,7 +36,8 @@ The single record of actual progress. The product vision lives in the [Master Pl
 ## M2 — Data Pipeline and Backend (in progress; detail in Architecture §14)
 - [x] M2.1 Project skeleton, CI, container, migrations (2026-11-16)
 - [x] M2.2 Static importer (2026-11-16). Verified against the live TransLink file: 553 routes, 13,125 stops, 173,183 trips, no rejected rows; version switch, rollback retention and failure cases covered by tests
-- [ ] M2.3 Collector with validation and freshness (24-hour live run)
+- [x] M2.3 Collector with validation and freshness — code and tests (2026-11-16). Verified on real data: the three saved morning snapshots and a short live run
+- [ ] M2.3 24-hour live run against TransLink — **not done**; needs the service left running for a day, then a review of `feed_fetch`
 - [ ] M2.4 Live API
 - [ ] M2.5 Aggregator and history tables
 - [ ] M2.6 Early deployment of the collector; one-week data review; database backups with a tested restore; external uptime check with owner notification (Architecture §17, W2 and W3)
@@ -44,6 +45,16 @@ The single record of actual progress. The product vision lives in the [Master Pl
 ### Measurements from M2.2 (one run, local machine)
 - Full import of the live file, including the 43 MB download: 32 s, about 240 MB peak memory.
 - One imported version occupies about 50 MB in PostgreSQL (the `trip` table is 41 MB). Keeping three versions is about 150 MB; revisit the "keep 3" rule if the hosted database is small.
+
+### Measurements from M2.3 (one live run, local laptop, Monday 2026-11-16, 12:54-17:14 AEST)
+- 567 fetches, none failed, no record rejected, no anomaly flagged. One conditional request was answered `304 Not Modified`.
+- **The laptop slept from 14:07 to 15:43** (confirmed in the system power log), so collection has gaps of up to 69 minutes there. The collector resumed by itself on wake. While the machine was awake (about 2 h 40 min in total) every poll ran on schedule: 30 s, 60 s and 120 s exactly.
+- Data was 6-36 s old when fetched (average 10-15 s), inside the 90 s "live" limit.
+- A fetch plus validation took 0.5-0.8 s on average; the slowest was 5.4 s.
+- Feed sizes moved with the time of day: 989-1,694 vehicles, 1,611-2,842 trip updates, 57-88 alerts (largest in the 16:00-17:00 peak).
+- The service used 92-100 MB of memory, with no growth over 4 h 20 min.
+- The fetch log took about 0.44 kB per row: roughly 2 MB a day, or 65 MB for the planned 30 days.
+- **This is not the 24-hour run.** It covers a weekday afternoon only, and a laptop that sleeps cannot do the 24-hour run; that needs an always-on machine (hosting decision A5) or a computer kept awake.
 
 ## M3–M5
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.

@@ -4,7 +4,7 @@ import datetime as dt
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from brispulse.config import Settings
@@ -68,6 +68,8 @@ def test_a_failed_fetch_is_logged_with_its_missing_values_missing(
         assert (row.outcome, row.detail) == ("network_error", "ConnectTimeout: timed out")
         assert (row.http_status, row.entity_count, row.accepted_count) == (None, None, None)
         assert (row.source_timestamp, row.rejected) == (None, None)
+        # A real SQL NULL, so `WHERE rejected IS NULL` and JSON comparisons behave.
+        assert session.scalar(select(func.count()).where(FeedFetch.rejected.is_(None))) == 1
 
 
 def test_reference_is_none_until_a_schedule_is_imported(

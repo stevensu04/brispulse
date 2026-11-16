@@ -4,6 +4,16 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### M2.3 — Real-time collector (Fable 5.2)
+- The running service now polls TransLink's three GTFS-Realtime feeds, validates every record against the static schedule, keeps the current picture in memory and writes one row per fetch to a new `feed_fetch` table.
+- Validation rules cover each hazard found in discovery: stale and long-silent vehicles, positions outside South East Queensland, future timestamps, records that do not match the schedule, delays beyond an hour, cancelled and replacement trips, alerts with several active periods or unknown stops.
+- "Running trip" is defined in one place (`realtime/populations.py`): matched to the schedule, not cancelled, scheduled start passed, and a fresh vehicle reporting. On the saved morning snapshots it gives 1,222 and 1,068 running trips, the same as the M1 probe; on the third it gives 994 against the probe's 992, because the probe mishandled two trips that had both a fresh and a stale vehicle record.
+- A failed or unusable response never replaces good data; the previous snapshot stays and its freshness state degrades with age.
+- The service imports the static schedule by itself at start-up and every six hours, in a subprocess.
+- Tests: 204 in total, including a 176 kB sample of real TransLink data (attributed in `backend/tests/fixtures/README.md`).
+- Live run: 4 h 20 min on a laptop, 567 fetches, none failed. The laptop slept for about 1 h 36 min in the middle, which shows as gaps in the log. The planned 24-hour run is still outstanding. Details in the roadmap.
+- Not yet user-visible: there is still no API or web page showing this data (M2.4, M3).
+
 ### M2.1 and M2.2 — Backend skeleton and static importer (Fable 5.2)
 First application code, on branch `m2-data-pipeline`.
 - Backend project: FastAPI app with a liveness probe, settings, PostgreSQL models and the first Alembic migration, Docker image, local `docker-compose` database, GitHub Actions CI (lint, format, type check, tests against PostgreSQL, container build).

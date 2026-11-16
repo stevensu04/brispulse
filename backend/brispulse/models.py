@@ -187,7 +187,8 @@ class FeedFetch(Base):
     entity_count: Mapped[int | None] = mapped_column(Integer)
     accepted_count: Mapped[int | None] = mapped_column(Integer)
     # Reason -> number of entities rejected for it.
-    rejected: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # none_as_null: a fetch with nothing to report stores SQL NULL, not the JSON value null.
+    rejected: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
     anomaly: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     detail: Mapped[str | None] = mapped_column(Text)
     # Not a foreign key: the log outlives pruned static versions.
