@@ -12,6 +12,8 @@ brispulse/              the Python package
   main.py               HTTP application
   gtfs_static/          import of TransLink's static GTFS schedule
   realtime/             collector: fetch, decode, validate, freshness, running trips
+  api/                  the /api/v1 endpoints: schemas, data builders, routing, errors
+  delay_stats.py        delay summaries (median, 90th percentile, bands)
   runtime.py            background tasks that run alongside the HTTP application
 migrations/             Alembic database migrations
 tests/                  pytest suite
@@ -54,6 +56,31 @@ contacting TransLink.
 
 **Run exactly one process.** Live state is held in memory, so do not start uvicorn with
 several workers, and avoid `--reload` while collecting (each reload starts over).
+
+## API
+
+With the service running, interactive documentation is at `http://127.0.0.1:8000/docs`
+and the OpenAPI document at `/openapi.json`.
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/v1/status` | State of each feed, last fetch attempts, schedule in use |
+| `GET /api/v1/overview` | Fresh vehicles, running trips, predicted-delay summary, alert counts |
+| `GET /api/v1/vehicles` | Vehicle positions; filters `mode`, `route_id`, `bbox`, `fresh_only` |
+| `GET /api/v1/routes` | Every route with live counts; filter `mode` |
+| `GET /api/v1/routes/{route_id}` | One route: vehicles, running trips, alerts |
+| `GET /api/v1/trips/{trip_id}` | One trip: predicted times and delays at upcoming stops |
+| `GET /api/v1/alerts` | Service alerts; filters `active`, `route_id`, `stop_id` |
+| `GET /api/v1/meta/metrics` | Metric definitions, thresholds, attribution |
+| `GET /healthz` | Process liveness only |
+
+Every response is `{"data": ..., "meta": ...}`. `meta.feeds` gives each feed's state
+(`live`, `delayed`, `stale`, `unavailable`) and timestamps. **A value that cannot be
+given is `null`, never `0` or an empty list**, and `meta.notes` says why. Errors are
+`{"error": {"code": ..., "message": ...}}`.
+
+These endpoints read only from memory, so they keep answering if the database is down.
+Only `GET` is supported.
 
 ## Checks
 

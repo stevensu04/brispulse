@@ -4,6 +4,15 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### M2.4 — Live API (Fable 5.2)
+- Added the read-only JSON API under `/api/v1`: `status`, `overview`, `vehicles`, `routes`, `routes/{id}`, `trips/{id}`, `alerts`, `meta/metrics`, with generated OpenAPI documentation at `/docs`.
+- One envelope for every response (`data` and `meta`), one shape for every error. `meta` states how fresh each underlying feed is. Unavailable values are `null` with a note, never `0` or an empty list; a real zero is only reported when live data supports it.
+- Delay summaries use the running-trip population, nearest-rank median and 90th percentile, and counts early, within band and late. Implausible delays are excluded and counted. Fewer than five trips gives counts but no percentiles.
+- Live endpoints read only from memory, so they keep working if the database is down. Responses carry `Cache-Control` and a weak `ETag`; large responses are gzip-compressed.
+- Tests: 306 in total. Every endpoint is validated strictly against its schema in four conditions (live, nothing fetched, everything too old, vehicles only).
+- Found by running against live data and fixed: a running trip could show no vehicle ID when its trip update named none; and the alert label "planned" was renamed "planned works" because other alerts are not necessarily incidents (see the roadmap).
+- Rate limiting is deferred to the hosting decision. Analytics endpoints and real-time coverage wait for M2.5, which stores history.
+
 ### M2.3 — Real-time collector (Fable 5.2)
 - The running service now polls TransLink's three GTFS-Realtime feeds, validates every record against the static schedule, keeps the current picture in memory and writes one row per fetch to a new `feed_fetch` table.
 - Validation rules cover each hazard found in discovery: stale and long-silent vehicles, positions outside South East Queensland, future timestamps, records that do not match the schedule, delays beyond an hour, cancelled and replacement trips, alerts with several active periods or unknown stops.

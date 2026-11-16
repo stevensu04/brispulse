@@ -10,12 +10,12 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **In progress** — M2.1, M2.2 and the M2.3 code done on branch `m2-data-pipeline` | M2.3's 24-hour live run is still to do; M2.4 (API) is next; M2.6 (deployment) is blocked on the hosting decision |
+| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.4 done on branch `m2-data-pipeline` | M2.3's 24-hour live run is still to do; M2.5 (history) is next; M2.6 (deployment) is blocked on the hosting decision |
 | M3 Mobility Monitoring Dashboard | Not started | |
 | M4 Mobility Analytics | Not started | Needs collected history from M2 |
 | M5 Production Readiness and Deployment | Not started | |
 
-**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. **What does not exist yet:** the API beyond a liveness probe, stored history and metrics, the web app, and any deployment. Collected data is held in memory and is not yet visible to a user.
+**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`). **What does not exist yet:** stored history and trend metrics, the web app, and any deployment. The API runs only on a developer's machine so far.
 
 ## M0 — Technical Discovery (done)
 - [x] Audit of the existing implementation: none exists; BrisPulse was a concept
@@ -38,7 +38,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.2 Static importer (2026-11-16). Verified against the live TransLink file: 553 routes, 13,125 stops, 173,183 trips, no rejected rows; version switch, rollback retention and failure cases covered by tests
 - [x] M2.3 Collector with validation and freshness — code and tests (2026-11-16). Verified on real data: the three saved morning snapshots and a short live run
 - [ ] M2.3 24-hour live run against TransLink — **not done**; needs the service left running for a day, then a review of `feed_fetch`
-- [ ] M2.4 Live API
+- [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
 - [ ] M2.5 Aggregator and history tables
 - [ ] M2.6 Early deployment of the collector; one-week data review; database backups with a tested restore; external uptime check with owner notification (Architecture §17, W2 and W3)
 
@@ -56,6 +56,12 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - The fetch log took about 0.44 kB per row: roughly 2 MB a day, or 65 MB for the planned 30 days.
 - **This is not the 24-hour run.** It covers a weekday afternoon only, and a laptop that sleeps cannot do the 24-hour run; that needs an always-on machine (hosting decision A5) or a computer kept awake.
 
+### Measurements from M2.4 (live, local machine, Monday 2026-11-16 about 17:30 AEST, evening peak)
+- 1,584 fresh vehicles, 1,252 running trips; predicted delay median 99 s, 90th percentile 609 s.
+- Largest response: the full vehicle list, 695 kB of JSON (98 kB compressed), built in about 20 ms. Other endpoints answered in 1-7 ms.
+- Service memory rose to about 140 MB (from about 95 MB in M2.3) now that route, stop and trip names are held in memory.
+- **Finding:** in the evening 34 of 61 active alerts were not construction or maintenance, and several of those were planned timetable changes filed under "other cause". The morning observation that alerts are mostly planned works does not hold all day, and the cause field cannot separate incidents from planned changes. The API therefore labels only "planned works" and makes no claim about the rest.
+
 ## M3–M5
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.
 
@@ -63,4 +69,5 @@ Scope as in the Master Plan §8. Detailed steps will be added here when M2 is un
 - **A5 — Choose hosting and a monthly budget.** Needed before M2.6. Requirements: an always-on container that does not sleep when idle, about 512 MB RAM, PostgreSQL with at least 1 GB. Current prices were not verified.
 - **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
 - Revisit the metric thresholds after the first week of collected data (A3).
+- **Rate limiting** (Architecture W10): not built into the application. Responses are served from memory in milliseconds and carry cache headers; a per-IP limit belongs at the host's proxy, so it is decided together with hosting (A5).
 - Update the portfolio page, which still describes the earlier event-day concept.
