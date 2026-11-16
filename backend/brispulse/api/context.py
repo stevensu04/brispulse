@@ -27,6 +27,7 @@ class Context:
         now: float,
         settings: Settings,
         latest_samples: Sequence[NetworkSampleRow] = (),
+        history_enabled: bool = False,
         thresholds: Thresholds = DEFAULT_THRESHOLDS,
     ) -> None:
         # ``state`` is immutable, so the whole request sees one consistent picture even
@@ -38,6 +39,7 @@ class Context:
         self.settings = settings
         # The most recent five-minute network sample, if history is being recorded.
         self.latest_samples = latest_samples
+        self.history_enabled = history_enabled
         self.thresholds = thresholds
         self.timezone = ZoneInfo(settings.service_timezone)
 

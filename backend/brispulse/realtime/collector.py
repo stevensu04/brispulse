@@ -28,6 +28,9 @@ from brispulse.realtime.thresholds import DEFAULT_THRESHOLDS, Thresholds
 
 logger = logging.getLogger(__name__)
 
+# How long to wait before looking again when no schedule has loaded yet.
+_SCHEDULE_WAIT_SECONDS = 2.0
+
 
 class Outcome(enum.StrEnum):
     OK = "ok"
@@ -229,6 +232,9 @@ class Collector:
         record = await self._poll(feed, started)
         record = dataclasses.replace(record, duration_ms=int((time.perf_counter() - timer) * 1000))
         self._state.last_attempts[feed] = record
+        if record.outcome is Outcome.NO_REFERENCE:
+            # Nothing was attempted, so there is nothing to log as a fetch.
+            return record
         if record.outcome not in (Outcome.OK, Outcome.NOT_MODIFIED, Outcome.UNCHANGED):
             logger.warning("feed %s: %s %s", feed.value, record.outcome.value, record.detail or "")
         try:
@@ -324,13 +330,20 @@ class Collector:
         """Poll one feed forever, once per interval, measured start to start."""
         while True:
             cycle_started = time.monotonic()
+            waiting_for_schedule = False
             try:
-                await self.poll_once(feed)
+                record = await self.poll_once(feed)
+                waiting_for_schedule = record.outcome is Outcome.NO_REFERENCE
             except asyncio.CancelledError:
                 raise
             except Exception:
                 # A bug in one cycle must not end collection for good.
                 logger.exception("unexpected error while polling %s", feed.value)
+            if waiting_for_schedule:
+                # Nothing was fetched. Look again soon, so live data appears as soon as
+                # the schedule has loaded rather than a whole interval later.
+                await asyncio.sleep(min(interval_s, _SCHEDULE_WAIT_SECONDS))
+                continue
             elapsed = time.monotonic() - cycle_started
             await asyncio.sleep(max(0.0, interval_s - elapsed))
 

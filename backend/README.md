@@ -31,9 +31,20 @@ to diagnose.
 - [uv](https://docs.astral.sh/uv/) (installs the right Python and dependencies)
 - Docker (for the local PostgreSQL database)
 
-## Local setup
+## Two ways to run
 
-Run from the repository root:
+**Live-only (no database).** This is what the first release uses. From `backend/`:
+
+```bash
+uv sync
+uv run uvicorn brispulse.main:app
+```
+
+With no `DATABASE_URL` set, the service downloads TransLink's schedule at start-up, keeps
+everything in memory and stores nothing. Live data appears about 12 seconds after start.
+There is no history, so no trends and no real-time coverage.
+
+**With a database (history on).** From the repository root:
 
 ```bash
 cp .env.example .env
@@ -45,17 +56,19 @@ Then from `backend/`:
 ```bash
 uv sync
 uv run alembic upgrade head
-uv run python -m brispulse.gtfs_static import
 uv run uvicorn brispulse.main:app
 ```
 
+This needs a host that never sleeps, because history is only as complete as the time the
+service was running.
+
 Starting the service starts the collector: it polls TransLink's real-time feeds (vehicle
 positions every 30 s, trip updates every 60 s, alerts every 120 s by default), checks for
-a new static schedule every 6 hours, and writes one row per fetch to the `feed_fetch`
-table. Set `BRISPULSE_COLLECTOR_ENABLED=false` to run the HTTP application without
-contacting TransLink.
+a new static schedule every 6 hours and, when a database is configured, writes one row
+per fetch to the `feed_fetch` table. Set `BRISPULSE_COLLECTOR_ENABLED=false` to run the
+HTTP application without contacting TransLink.
 
-It also records history: one delay observation per running trip whenever new trip updates
+With a database it also records history: one delay observation per running trip whenever new trip updates
 arrive, a network sample every five minutes (including real-time coverage), the alerts in
 the feed, and once a service day has closed, a per-route rollup. Set
 `BRISPULSE_HISTORY_ENABLED=false` to collect without storing any of this.

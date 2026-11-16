@@ -17,7 +17,7 @@ target_metadata = Base.metadata
 
 def _database_url() -> str:
     # Tests pass a URL explicitly; everything else uses the application settings.
-    return config.get_main_option("sqlalchemy.url") or get_settings().database_url
+    return config.get_main_option("sqlalchemy.url") or get_settings().require_database_url()
 
 
 def run_migrations_offline() -> None:

@@ -17,5 +17,7 @@ WORKDIR /app
 COPY --from=build /app /app
 USER brispulse
 EXPOSE 8000
-# Apply migrations with `alembic upgrade head` as a release step before starting.
-CMD ["uvicorn", "brispulse.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# One process only: live state is held in memory.
+# Hosts that assign the port set PORT; otherwise 8000.
+# With a database, apply migrations first: `alembic upgrade head`.
+CMD ["sh", "-c", "exec uvicorn brispulse.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -205,6 +205,7 @@ def status(context: Context) -> View[StatusData]:
             TU: settings.poll_trip_updates_seconds,
             ALERTS: settings.poll_alerts_seconds,
         },
+        history_enabled=context.history_enabled,
     )
     notes = _notes(context, *FeedName)
     if reference is None:
@@ -219,6 +220,8 @@ def _coverage(context: Context) -> tuple[CoverageOut | None, str | None]:
     """Real-time coverage from the latest network sample, if it is recent enough."""
     samples = {row.mode: row for row in context.latest_samples}
     overall = samples.get(ALL_MODES)
+    if not context.history_enabled:
+        return None, "coverage: not available, because this deployment keeps no history."
     if overall is None:
         return None, "coverage: not computed yet; it is sampled every few minutes."
     age = context.now - overall.sampled_at.timestamp()

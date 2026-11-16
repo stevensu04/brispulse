@@ -14,8 +14,12 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Hosting platforms conventionally provide DATABASE_URL without a prefix.
-    database_url: str = Field(
+    # Optional. Without a database the service runs live-only: it reads the schedule
+    # straight from TransLink at start-up, keeps everything in memory and stores no
+    # history (architecture §19). Hosting platforms conventionally provide DATABASE_URL
+    # without a prefix.
+    database_url: str | None = Field(
+        default=None,
         validation_alias=AliasChoices("BRISPULSE_DATABASE_URL", "DATABASE_URL"),
     )
 
@@ -55,8 +59,11 @@ class Settings(BaseSettings):
 
     @field_validator("database_url")
     @classmethod
-    def _use_psycopg3_driver(cls, value: str) -> str:
+    def _use_psycopg3_driver(cls, value: str | None) -> str | None:
         """Accept the URL forms hosts hand out and select the psycopg 3 driver."""
+        if not value:
+            # An empty variable means "no database", the same as an absent one.
+            return None
         for prefix in ("postgres://", "postgresql://"):
             if value.startswith(prefix):
                 return "postgresql+psycopg://" + value[len(prefix) :]
@@ -66,8 +73,24 @@ class Settings(BaseSettings):
     def static_feed_url(self) -> str:
         return self.translink_base_url.rstrip("/") + self.static_feed_path
 
+    @property
+    def live_only(self) -> bool:
+        """True when no database is configured."""
+        return self.database_url is None
+
+    def require_database_url(self) -> str:
+        """The database URL, for commands that cannot work without one."""
+        if self.database_url is None:
+            raise MissingDatabaseError(
+                "This command needs a database: set DATABASE_URL (see .env.example)."
+            )
+        return self.database_url
+
+
+class MissingDatabaseError(RuntimeError):
+    """A database is required but none is configured."""
+
 
 @lru_cache
 def get_settings() -> Settings:
-    # Values come from the environment; a missing DATABASE_URL fails here, at start-up.
     return Settings()

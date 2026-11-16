@@ -75,6 +75,9 @@ class StatusData(BaseModel):
     feeds: dict[FeedName, FeedStatus]
     static: StaticStatus | None
     poll_interval_seconds: dict[FeedName, float]
+    # False in a live-only deployment: nothing is stored, so there are no trends and
+    # no real-time coverage.
+    history_enabled: bool
 
 
 # --- shared references ------------------------------------------------------------

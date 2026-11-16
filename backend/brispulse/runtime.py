@@ -1,19 +1,23 @@
-"""Background work the service does while it runs (architecture §3).
+"""Background work the service does while it runs (architecture §3 and §19).
 
-Three long-lived tasks share one process with the HTTP application:
+The service runs in one of two shapes, chosen by whether a database is configured.
 
-* the collector polls the real-time feeds;
-* the static refresher periodically imports a new schedule, in a subprocess;
-* the reference refresher reloads in-memory lookups when the active version changes.
+**Live-only** (no database): the schedule is read straight from TransLink at start-up
+and held in memory; the collector polls the real-time feeds; nothing is stored. This
+fits a host that stops the service when nobody is using it: on waking, it is showing
+live data again within seconds, and there is nothing to lose when it stops.
 
-Each loop catches its own failures and tries again later. None of them can take the
-HTTP application down.
+**With a database**: the schedule is imported into PostgreSQL in a subprocess, every
+fetch is logged, and history is recorded. This needs a host that never sleeps.
+
+Each background loop catches its own failures and tries again later. None of them can
+take the HTTP application down.
 """
 
 import asyncio
 import logging
 import sys
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Protocol
@@ -24,9 +28,10 @@ from sqlalchemy.orm import Session, sessionmaker
 from brispulse.config import Settings
 from brispulse.db import make_engine, make_session_factory
 from brispulse.history.recorder import HistoryRecorder
-from brispulse.realtime.collector import Collector, LiveStateHolder
+from brispulse.realtime.collector import Collector, FetchRecord, LiveStateHolder
 from brispulse.realtime.fetch_log import make_fetch_recorder
 from brispulse.realtime.reference import Reference, active_version_id, load_reference
+from brispulse.realtime.zip_reference import ZipReferenceHolder
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +42,7 @@ _REFERENCE_RETRY_SECONDS = 30.0
 
 
 class ReferenceHolder:
-    """The static lookups currently in use. None until a version has been imported."""
+    """The static lookups currently in use, loaded from the database."""
 
     def __init__(self, session_factory: sessionmaker[Session]) -> None:
         self._session_factory = session_factory
@@ -63,24 +68,29 @@ class HoldsReference(Protocol):
     def current(self) -> Reference | None: ...
 
 
+class RefreshesReference(HoldsReference, Protocol):
+    def refresh(self) -> bool: ...
+
+
 @dataclass(frozen=True, slots=True)
 class Runtime:
     """What the HTTP layer needs from the running service."""
 
     live: LiveStateHolder
     reference: HoldsReference
-    # None when history is turned off (and in tests that do not need it).
+    # None when no history is kept: in live-only mode, or when it is turned off.
     history: HistoryRecorder | None = None
 
 
-async def keep_reference_current(holder: ReferenceHolder) -> None:
+async def keep_reference_current(holder: RefreshesReference, check_seconds: float) -> None:
+    """Load the reference, then look for a newer one every ``check_seconds``."""
     while True:
         try:
             await asyncio.to_thread(holder.refresh)
         except Exception:
             logger.exception("could not refresh the static reference")
         waiting = holder.current is None
-        await asyncio.sleep(_REFERENCE_RETRY_SECONDS if waiting else _REFERENCE_CHECK_SECONDS)
+        await asyncio.sleep(_REFERENCE_RETRY_SECONDS if waiting else check_seconds)
 
 
 async def import_static_feed() -> int:
@@ -109,40 +119,79 @@ async def keep_static_current(settings: Settings, holder: ReferenceHolder) -> No
         await asyncio.sleep(settings.static_check_interval_seconds)
 
 
-@asynccontextmanager
-async def running_service(settings: Settings) -> AsyncIterator[Runtime]:
-    """Start the background tasks and stop them cleanly on exit."""
-    engine = make_engine(settings.database_url)
-    session_factory = make_session_factory(engine)
-    reference = ReferenceHolder(session_factory)
-    live = LiveStateHolder()
-    client = httpx2.AsyncClient(
+def _discard_fetch_record(record: FetchRecord) -> None:
+    """Live-only mode keeps no fetch log. The collector still logs every failure."""
+
+
+def _make_client(settings: Settings) -> httpx2.AsyncClient:
+    return httpx2.AsyncClient(
         headers={"User-Agent": settings.user_agent},
         timeout=settings.realtime_timeout_seconds,
         follow_redirects=True,
     )
+
+
+async def _stop(tasks: list[asyncio.Task[None]]) -> None:
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
+@asynccontextmanager
+async def _live_only_service(settings: Settings) -> AsyncIterator[Runtime]:
+    reference = ZipReferenceHolder(settings)
+    live = LiveStateHolder()
+    client = _make_client(settings)
+    collector = Collector(settings, client, live, lambda: reference.current, _discard_fetch_record)
+    # The schedule download is not awaited here: the HTTP application starts at once
+    # and reports that it is still loading, instead of making a waking host time out.
+    tasks = [
+        asyncio.create_task(
+            keep_reference_current(reference, settings.static_check_interval_seconds),
+            name="reference-refresh",
+        ),
+        asyncio.create_task(collector.run(), name="collector"),
+    ]
+    logger.info("running live-only: no database, no history")
+    try:
+        yield Runtime(live=live, reference=reference)
+    finally:
+        await _stop(tasks)
+        await client.aclose()
+
+
+@asynccontextmanager
+async def _database_service(settings: Settings, database_url: str) -> AsyncIterator[Runtime]:
+    engine = make_engine(database_url)
+    session_factory = make_session_factory(engine)
+    reference = ReferenceHolder(session_factory)
+    live = LiveStateHolder()
+    client = _make_client(settings)
     history = (
         HistoryRecorder(settings, session_factory, live, lambda: reference.current)
         if settings.history_enabled
         else None
     )
+    on_publish: Callable[..., None] | None = history.on_publish if history is not None else None
     collector = Collector(
         settings,
         client,
         live,
         lambda: reference.current,
         make_fetch_recorder(session_factory),
-        on_publish=history.on_publish if history is not None else None,
+        on_publish=on_publish,
     )
-    # Load the reference before the first poll. Otherwise every feed's first poll finds
-    # nothing to validate against and waits a full interval before trying again.
+    # Load the reference before the first poll: it is one quick query, and the first
+    # poll then has something to validate against.
     try:
         await asyncio.to_thread(reference.refresh)
     except Exception:
         logger.exception("could not load the static reference at start-up")
     tasks = [
         asyncio.create_task(keep_static_current(settings, reference), name="static-refresh"),
-        asyncio.create_task(keep_reference_current(reference), name="reference-refresh"),
+        asyncio.create_task(
+            keep_reference_current(reference, _REFERENCE_CHECK_SECONDS), name="reference-refresh"
+        ),
         asyncio.create_task(collector.run(), name="collector"),
     ]
     if history is not None:
@@ -150,11 +199,20 @@ async def running_service(settings: Settings) -> AsyncIterator[Runtime]:
     try:
         yield Runtime(live=live, reference=reference, history=history)
     finally:
-        for task in tasks:
-            task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await _stop(tasks)
         if history is not None:
             # After the tasks have stopped, so nothing else is writing.
             await history.flush()
         await client.aclose()
         engine.dispose()
+
+
+@asynccontextmanager
+async def running_service(settings: Settings) -> AsyncIterator[Runtime]:
+    """Start the background tasks and stop them cleanly on exit."""
+    if settings.database_url is None:
+        async with _live_only_service(settings) as runtime:
+            yield runtime
+    else:
+        async with _database_service(settings, settings.database_url) as runtime:
+            yield runtime

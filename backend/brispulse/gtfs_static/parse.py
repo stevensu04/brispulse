@@ -389,6 +389,21 @@ def read_trips(
     return list(rows.values()), report
 
 
+def read_trip_headsigns(zf: zipfile.ZipFile, route_ids: set[str]) -> dict[str, str | None]:
+    """Trip ID -> destination text, for every trip on a known route.
+
+    The live-only deployment uses this instead of ``read_trips``: it needs to recognise
+    and name trips, not their time spans, so ``stop_times.txt`` is never read.
+    """
+    headsigns: dict[str, str | None] = {}
+    for raw in _dict_rows(zf, "trips.txt", {"trip_id", "route_id"}):
+        trip_id = _text(raw["trip_id"])
+        if trip_id is None or _text(raw["route_id"]) not in route_ids:
+            continue
+        headsigns.setdefault(trip_id, _text(raw.get("trip_headsign")))
+    return headsigns
+
+
 _WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 

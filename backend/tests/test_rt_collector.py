@@ -196,7 +196,31 @@ async def test_without_a_static_schedule_nothing_is_fetched() -> None:
     assert record.outcome is Outcome.NO_REFERENCE
     assert harness.requests == []
     assert harness.state.current.vehicles is None
-    assert harness.records == [record]
+    # No fetch was attempted, so the fetch log stays empty; the status still shows it.
+    assert harness.records == []
+    assert harness.state.last_attempts[VP] is record
+
+
+async def test_polling_starts_as_soon_as_the_schedule_has_loaded() -> None:
+    # A waking host: the schedule arrives a moment after the service starts. Live data
+    # must follow at once, not a whole polling interval later.
+    harness = Harness(reference=None)
+    harness.replies.append(ok(feed_bytes(vehicle())))
+    task = asyncio.create_task(harness.collector.run_feed(VP, interval_s=3600))
+    await asyncio.sleep(0.05)
+    assert harness.requests == []
+
+    harness.reference = REFERENCE
+    for _ in range(100):
+        if harness.state.current.vehicles is not None:
+            break
+        await asyncio.sleep(0.05)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert harness.state.current.vehicles is not None
+    assert len(harness.requests) == 1
 
 
 async def test_a_sudden_collapse_in_entity_count_is_flagged_but_still_published() -> None:

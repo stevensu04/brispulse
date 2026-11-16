@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
 
     settings = get_settings()
     configure_logging(settings.log_level)
-    engine = make_engine(settings.database_url)
+    engine = make_engine(settings.require_database_url())
     session_factory = make_session_factory(engine)
 
     try:

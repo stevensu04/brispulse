@@ -66,7 +66,21 @@ def test_without_history_coverage_is_null_with_a_note() -> None:
     body = service_with_network().get("/api/v1/overview").json()
 
     assert body["data"]["coverage"] is None
+    assert (
+        "coverage: not available, because this deployment keeps no history."
+        in body["meta"]["notes"]
+    )
+    assert service_with_network().data("/api/v1/status")["history_enabled"] is False
+
+
+def test_before_the_first_sample_coverage_is_null_with_a_note() -> None:
+    service = with_history(service_with_network(), [])
+
+    body = service.get("/api/v1/overview").json()
+
+    assert body["data"]["coverage"] is None
     assert "coverage: not computed yet; it is sampled every few minutes." in body["meta"]["notes"]
+    assert service.data("/api/v1/status")["history_enabled"] is True
 
 
 def test_an_old_sample_is_withheld() -> None:
