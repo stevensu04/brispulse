@@ -4,6 +4,17 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-16
 
+### M2.5 — History (Fable 5.2)
+- Four new tables: `trip_record` (one row per trip per service day, summarising its delay observations), `network_sample` (network state every five minutes, per mode), `alert_record` (each alert's content and when it was seen; reworded alerts get a new row) and `route_day_stats` (per-route daily rollup).
+- The unit for route statistics is the trip: each trip contributes its own median delay, and only if it was observed at least three times. Percentiles need at least five trips.
+- Real-time coverage (scheduled trips in progress that have live data) is computed with each network sample and shown in `/api/v1/overview`. The schedule lookup handles service days that run past midnight and calendar exceptions.
+- Data too old to trust is not written as history: a stale feed leaves its figures empty for that sample. History has gaps where collection had gaps.
+- A trip counts as finished once ten minutes of newer data have been seen without it, judged against the data's own timestamps rather than the clock, so an interruption in collection (such as the laptop sleeping in the M2.3 run) does not close trips that are still running.
+- On shutdown, in-flight trips are written with their observations; on start-up they are resumed. If the database is unreachable, trip summaries are held and retried.
+- Hourly maintenance rolls up closed service days and applies retention (30 days for the fetch log; 35 days for trip records, deleted only once their day has been rolled up).
+- Tests: 365 in total. Verified against live data, including a stop-and-restart and a trial rollup; details in the roadmap.
+- Not done: analytics endpoints over the stored history (planned for M4), and any accumulated history, which needs the service to stay running.
+
 ### M2.4 — Live API (Fable 5.2)
 - Added the read-only JSON API under `/api/v1`: `status`, `overview`, `vehicles`, `routes`, `routes/{id}`, `trips/{id}`, `alerts`, `meta/metrics`, with generated OpenAPI documentation at `/docs`.
 - One envelope for every response (`data` and `meta`), one shape for every error. `meta` states how fresh each underlying feed is. Unavailable values are `null` with a note, never `0` or an empty list; a real zero is only reported when live data supports it.

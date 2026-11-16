@@ -14,6 +14,7 @@ brispulse/              the Python package
   realtime/             collector: fetch, decode, validate, freshness, running trips
   api/                  the /api/v1 endpoints: schemas, data builders, routing, errors
   delay_stats.py        delay summaries (median, 90th percentile, bands)
+  history/              stored history: trip summaries, 5-minute samples, alerts, daily rollup
   runtime.py            background tasks that run alongside the HTTP application
 migrations/             Alembic database migrations
 tests/                  pytest suite
@@ -53,6 +54,21 @@ positions every 30 s, trip updates every 60 s, alerts every 120 s by default), c
 a new static schedule every 6 hours, and writes one row per fetch to the `feed_fetch`
 table. Set `BRISPULSE_COLLECTOR_ENABLED=false` to run the HTTP application without
 contacting TransLink.
+
+It also records history: one delay observation per running trip whenever new trip updates
+arrive, a network sample every five minutes (including real-time coverage), the alerts in
+the feed, and once a service day has closed, a per-route rollup. Set
+`BRISPULSE_HISTORY_ENABLED=false` to collect without storing any of this.
+
+| Table | Holds | Kept for |
+| --- | --- | --- |
+| `feed_fetch` | One row per fetch attempt | 30 days |
+| `trip_record` | One row per trip per service day: its delay summary | 35 days, and only deleted once rolled up |
+| `network_sample` | Network state every five minutes, per mode | Indefinitely |
+| `alert_record` | Each alert's content and when it was seen | Indefinitely |
+| `route_day_stats` | Per-route daily rollup | Indefinitely |
+
+History has gaps wherever collection had gaps. Nothing is interpolated or back-filled.
 
 **Run exactly one process.** Live state is held in memory, so do not start uvicorn with
 several workers, and avoid `--reload` while collecting (each reload starts over).

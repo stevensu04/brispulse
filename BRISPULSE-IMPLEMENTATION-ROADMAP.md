@@ -10,12 +10,12 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.4 done on branch `m2-data-pipeline` | M2.3's 24-hour live run is still to do; M2.5 (history) is next; M2.6 (deployment) is blocked on the hosting decision |
+| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.5 done on branch `m2-data-pipeline` | Only M2.6 (deployment) and the 24-hour live run remain, and both need an always-on machine: **blocked on the hosting decision (A5)** |
 | M3 Mobility Monitoring Dashboard | Not started | |
 | M4 Mobility Analytics | Not started | Needs collected history from M2 |
 | M5 Production Readiness and Deployment | Not started | |
 
-**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`). **What does not exist yet:** stored history and trend metrics, the web app, and any deployment. The API runs only on a developer's machine so far.
+**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). **What does not exist yet:** the web app, analytics endpoints over the stored history, and any deployment. No history has accumulated: the service has only run for short tests on a developer's machine.
 
 ## M0 — Technical Discovery (done)
 - [x] Audit of the existing implementation: none exists; BrisPulse was a concept
@@ -39,7 +39,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.3 Collector with validation and freshness — code and tests (2026-11-16). Verified on real data: the three saved morning snapshots and a short live run
 - [ ] M2.3 24-hour live run against TransLink — **not done**; needs the service left running for a day, then a review of `feed_fetch`
 - [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
-- [ ] M2.5 Aggregator and history tables
+- [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
 - [ ] M2.6 Early deployment of the collector; one-week data review; database backups with a tested restore; external uptime check with owner notification (Architecture §17, W2 and W3)
 
 ### Measurements from M2.2 (one run, local machine)
@@ -61,6 +61,16 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - Largest response: the full vehicle list, 695 kB of JSON (98 kB compressed), built in about 20 ms. Other endpoints answered in 1-7 ms.
 - Service memory rose to about 140 MB (from about 95 MB in M2.3) now that route, stop and trip names are held in memory.
 - **Finding:** in the evening 34 of 61 active alerts were not construction or maintenance, and several of those were planned timetable changes filed under "other cause". The morning observation that alerts are mostly planned works does not hold all day, and the cause field cannot separate incidents from planned changes. The API therefore labels only "planned works" and makes no claim about the rest.
+
+### Measurements from M2.5 (live, local machine, Monday 2026-11-16, 19:16-19:33 AEST, evening off-peak)
+The five-minute tick was shortened to one minute for this test, to see several cycles quickly.
+- 14 network samples over 14 minutes, every feed live throughout. About 670-715 fresh vehicles and 530-580 running trips.
+- **Real-time coverage:** of 554-632 scheduled trips in progress, 91-92 % had a trip update and 88-91 % a fresh vehicle. This matches the 92-93 % and 91-92 % measured by hand in the morning.
+- 746 trips recorded in 13 minutes; 48 had finished. The stored rows obeyed the design: a finished trip never keeps its raw observations, a running one always does.
+- **Restart:** the service was stopped and started again. 673 in-flight trips were resumed; 493 of them went on to gain observations, each with its earlier observations intact; none lost any.
+- **Rollup:** a trial run over the day's records (not saved, because the service day was not over) reduced 691 eligible trips to 247 routes in 58 ms; 42 routes had enough trips for percentiles.
+- Storage after 13 minutes: `trip_record` 496 kB for 746 rows (about 0.66 kB per row while raw observations are attached). At roughly 20,000 trips a day that is on the order of 10 MB a day, and about 350 MB for 35 days. **This is an extrapolation from 13 minutes and needs a real day to confirm**; if it holds, shorten the 35-day retention on a small database.
+- Service memory: about 100 MB.
 
 ## M3–M5
 Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.

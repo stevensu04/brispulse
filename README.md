@@ -2,7 +2,7 @@
 
 A Brisbane mobility intelligence platform built on TransLink's open public transport data.
 
-> **Status: early development.** The backend collects TransLink's live feeds, validates them and serves them through a JSON API, with tests. There is no stored history, no web interface and no public deployment yet. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
+> **Status: early development.** The backend collects TransLink's live feeds, validates them, serves them through a JSON API and records history, with tests. It has only run on a developer's machine: there is no web interface, no public deployment and no accumulated history yet. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
 
 ## What it aims to do
 
