@@ -20,7 +20,7 @@ from brispulse.realtime.normalise import (
     normalise_vehicles,
 )
 from brispulse.realtime.populations import running_trips
-from brispulse.realtime.reference import Reference
+from brispulse.realtime.reference import Reference, RouteInfo, StopInfo
 from brispulse.realtime.thresholds import DEFAULT_THRESHOLDS
 
 FIXTURE = Path(__file__).parent / "fixtures" / "translink_2026-11-16_0903"
@@ -33,9 +33,12 @@ def reference() -> Reference:
     data = json.loads((FIXTURE / "reference.json").read_text())
     return Reference(
         version_id=1,
-        route_modes=data["route_modes"],
-        trip_ids=frozenset(data["trip_ids"]),
-        stop_ids=frozenset(data["stop_ids"]),
+        routes={
+            route_id: RouteInfo(None, None, mode, None, None)
+            for route_id, mode in data["route_modes"].items()
+        },
+        trip_headsigns=dict.fromkeys(data["trip_ids"]),
+        stops={stop_id: StopInfo(stop_id, 0.0, 0.0) for stop_id in data["stop_ids"]},
     )
 
 

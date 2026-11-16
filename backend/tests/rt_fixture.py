@@ -10,16 +10,25 @@ from typing import Any
 
 from google.transit import gtfs_realtime_pb2 as pb
 
-from brispulse.realtime.reference import Reference
+from brispulse.realtime.reference import Reference, RouteInfo, StopInfo
 
 BRISBANE = dt.timezone(dt.timedelta(hours=10))
 NOW = int(dt.datetime(2026, 11, 16, 9, 0, 0, tzinfo=BRISBANE).timestamp())
 
 REFERENCE = Reference(
     version_id=7,
-    route_modes={"R1": "bus", "R2": "rail"},
-    trip_ids=frozenset({"T1", "T2", "T3", "T4"}),
-    stop_ids=frozenset({"S1", "S2"}),
+    routes={
+        "R1": RouteInfo("100", "City Loop", "bus", "00FF00", "000000"),
+        "R2": RouteInfo("BNSH", "Northern Line", "rail", None, None),
+    },
+    trip_headsigns={"T1": "City", "T2": "Northside", "T3": "City", "T4": None},
+    stops={
+        "S1": StopInfo("First Street", -27.47, 153.02),
+        "S2": StopInfo("Second Street", -27.48, 153.03),
+    },
+    published_at=dt.datetime(2026, 11, 13, 19, 45, 24, tzinfo=dt.UTC),
+    feed_start_date=dt.date(2026, 11, 14),
+    feed_end_date=dt.date(2027, 1, 13),
 )
 
 SCHEDULED = pb.TripDescriptor.SCHEDULED

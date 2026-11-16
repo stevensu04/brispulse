@@ -83,8 +83,8 @@ def normalise_vehicles(
 
         trip_id = record.trip.trip_id or None
         route_id = record.trip.route_id or None
-        mode = reference.route_modes.get(route_id) if route_id else None
-        matched = trip_id in reference.trip_ids and mode is not None
+        mode = reference.mode_of(route_id)
+        matched = reference.has_trip(trip_id) and mode is not None
         if not matched:
             unmatched += 1
 
@@ -209,8 +209,8 @@ def normalise_trip_updates(
             pb.TripDescriptor.ScheduleRelationship, update.trip.schedule_relationship
         )
         route_id = update.trip.route_id or None
-        mode = reference.route_modes.get(route_id) if route_id else None
-        matched = trip_id in reference.trip_ids and mode is not None
+        mode = reference.mode_of(route_id)
+        matched = reference.has_trip(trip_id) and mode is not None
 
         unmatched += not matched
         implausible += delay_implausible
@@ -275,8 +275,8 @@ def normalise_alerts(
         # dict.fromkeys keeps feed order while removing repeats.
         route_ids = tuple(dict.fromkeys(e.route_id for e in record.informed_entity if e.route_id))
         stop_ids = tuple(dict.fromkeys(e.stop_id for e in record.informed_entity if e.stop_id))
-        unresolved_routes = tuple(r for r in route_ids if r not in reference.route_modes)
-        unresolved_stops = tuple(s for s in stop_ids if s not in reference.stop_ids)
+        unresolved_routes = tuple(r for r in route_ids if r not in reference.routes)
+        unresolved_stops = tuple(s for s in stop_ids if s not in reference.stops)
         if unresolved_routes or unresolved_stops:
             # The alert itself is still valid and is kept.
             unmatched += 1

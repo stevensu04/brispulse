@@ -95,9 +95,25 @@ def test_reference_holds_the_active_versions_ids(
 
     assert reference is not None
     assert reference.version_id == result.version_id
-    assert reference.route_modes == {"R1": "bus", "R2": "rail"}
-    assert reference.trip_ids == {"T1", "T2", "T3"}
-    assert reference.stop_ids == {"S1", "S2", "ST1"}
+    assert {route_id: route.mode for route_id, route in reference.routes.items()} == {
+        "R1": "bus",
+        "R2": "rail",
+    }
+    assert reference.routes["R1"] == ("100", "City Loop", "bus", "00FF00", "000000")
+    assert reference.trip_headsigns == {"T1": "City", "T2": "City", "T3": "Northside"}
+    assert set(reference.stops) == {"S1", "S2", "ST1"}
+    assert reference.stops["ST1"].name == "Central Station"
+    assert reference.feed_end_date == dt.date(2027, 1, 13)
+    assert (reference.mode_of("R2"), reference.mode_of("R404"), reference.mode_of(None)) == (
+        "rail",
+        None,
+        None,
+    )
+    assert (reference.has_trip("T1"), reference.has_trip("T404"), reference.has_trip(None)) == (
+        True,
+        False,
+        False,
+    )
 
 
 def test_holder_reloads_only_when_the_active_version_changes(
@@ -118,4 +134,4 @@ def test_holder_reloads_only_when_the_active_version_changes(
 
     assert holder.refresh() is True
     assert holder.current is not None and holder.current is not first
-    assert holder.current.route_modes["R3"] == "ferry"
+    assert holder.current.mode_of("R3") == "ferry"

@@ -22,6 +22,14 @@ class Thresholds:
     # 0.7 % of running trips exceeded half of it in the M1 snapshots.
     delay_plausible_s: int = 3600
 
+    # A predicted delay inside this band counts as "within band". TransLink's official
+    # on-time thresholds were not found, so these are starting values and the result
+    # must never be called on-time performance (architecture §6.4).
+    delay_early_s: int = 60
+    delay_late_s: int = 300
+    # Below this many trips, a median or percentile is withheld. Starting value.
+    min_sample: int = 5
+
     # South East Queensland bounding box, wider than the range observed on 2026-11-16
     # (lat -28.174..-26.343, lon 152.334..153.543). Starting value.
     lat_min: float = -28.5

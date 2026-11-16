@@ -73,6 +73,8 @@ class LiveStateHolder:
 
     def __init__(self) -> None:
         self.current = LiveState()
+        # The latest attempt per feed, successful or not, for the status endpoint.
+        self.last_attempts: dict[FeedName, FetchRecord] = {}
 
     def publish(self, snapshot: FeedSnapshot[Any]) -> None:
         field_name = {
@@ -223,6 +225,7 @@ class Collector:
         timer = time.perf_counter()
         record = await self._poll(feed, started)
         record = dataclasses.replace(record, duration_ms=int((time.perf_counter() - timer) * 1000))
+        self._state.last_attempts[feed] = record
         if record.outcome not in (Outcome.OK, Outcome.NOT_MODIFIED, Outcome.UNCHANGED):
             logger.warning("feed %s: %s %s", feed.value, record.outcome.value, record.detail or "")
         try:

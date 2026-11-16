@@ -16,6 +16,7 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Protocol
 
 import httpx2
 from sqlalchemy.orm import Session, sessionmaker
@@ -54,12 +55,19 @@ class ReferenceHolder:
         return True
 
 
+class HoldsReference(Protocol):
+    """Anything that can say which static reference is current."""
+
+    @property
+    def current(self) -> Reference | None: ...
+
+
 @dataclass(frozen=True, slots=True)
 class Runtime:
     """What the HTTP layer needs from the running service."""
 
     live: LiveStateHolder
-    reference: ReferenceHolder
+    reference: HoldsReference
 
 
 async def keep_reference_current(holder: ReferenceHolder) -> None:

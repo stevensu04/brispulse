@@ -2,19 +2,32 @@
 
 The process also runs the collector (architecture §3.1). Because live state is held in
 memory, the service must run as exactly one process: start it with a single worker.
-
-Only the liveness probe is exposed so far; the ``/api/v1`` endpoints arrive in M2.4.
 """
 
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.middleware.gzip import GZipMiddleware
 
 from brispulse import __version__
+from brispulse.api.errors import install_error_handlers
+from brispulse.api.router import router as api_router
 from brispulse.config import Settings, get_settings
 from brispulse.logging_setup import configure_logging
 from brispulse.runtime import running_service
+
+DESCRIPTION = """
+Read-only API for BrisPulse: live public transport conditions in South East Queensland.
+
+Every response has the same envelope: `data`, and `meta` describing how fresh the
+underlying feeds are. A value that cannot be given is `null`, never `0`; `meta.notes`
+says why.
+
+Contains Translink data © State of Queensland (Department of Transport and Main Roads),
+licensed under CC BY 4.0. BrisPulse is independent and not endorsed by Translink.
+"""
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,7 +44,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.runtime = runtime
             yield
 
-    app = FastAPI(title="BrisPulse", version=__version__, lifespan=lifespan)
+    app = FastAPI(
+        title="BrisPulse", version=__version__, description=DESCRIPTION, lifespan=lifespan
+    )
+    app.state.settings = settings
+    app.state.clock = time.time
+    # The vehicle list was 695 kB of JSON in the evening peak and 98 kB compressed
+    # (measured 2026-11-16).
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
+    install_error_handlers(app)
+    app.include_router(api_router)
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict[str, str]:
