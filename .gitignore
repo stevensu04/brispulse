@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# Downloaded data (reproducible; never commit raw feeds)
+*.zip
+*.pb
+!backend/tests/fixtures/**
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

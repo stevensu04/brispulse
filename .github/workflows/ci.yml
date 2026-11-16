@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: brispulse
+          POSTGRES_PASSWORD: brispulse
+          POSTGRES_DB: brispulse_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brispulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Throwaway database inside this job; not a secret.
+      BRISPULSE_TEST_DATABASE_URL: postgresql+psycopg://brispulse:brispulse@localhost:5432/brispulse_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+          working-directory: backend
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Test
+        run: uv run pytest
+
+  image:
+    name: Container build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build -t brispulse:ci .
+      - name: Start the container and check liveness
+        run: |
+          docker run -d --name brispulse -p 8000:8000 \
+            -e DATABASE_URL=postgresql://unused:unused@localhost:5432/unused brispulse:ci
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://localhost:8000/healthz; then exit 0; fi
+            sleep 1
+          done
+          docker logs brispulse
+          exit 1
