@@ -18,7 +18,7 @@ BrisPulse will be **one small always-on service** that polls TransLink's three G
 | Decision | Choice | Main reason |
 | --- | --- | --- |
 | Process model | One always-on process: collector + API together | Polling every 30–60 s and building history needs a process that never sleeps; one process avoids a cache/queue |
-| Backend | Python, FastAPI, Pydantic, SQLAlchemy + Alembic, httpx | Async polling fits in-process; typed validation and a generated OpenAPI contract |
+| Backend | Python, FastAPI, Pydantic, SQLAlchemy + Alembic, httpx2 (originally httpx; changed in M2.1, see the changelog) | Async polling fits in-process; typed validation and a generated OpenAPI contract |
 | Live state | In memory, rebuilt within one poll after restart | It is fully reconstructible from the feeds; persisting it buys nothing |
 | Durable storage | PostgreSQL, history and reference data only | History is a real requirement; percentile functions in SQL; standard and explainable |
 | Static GTFS | Derived subset, versioned; `stop_times` reduced to one span per trip | 4.67 M rows are not needed at runtime |
@@ -365,7 +365,7 @@ A critical pass over the design above, written after approval. Items marked **Ga
 | W6 | A 60 s TripUpdates poll gives few observations for short trips, so a per-trip median can rest on one or two samples. | Risk | Require a minimum number of observations (3 **[P]**) before a trip enters route statistics; store the count (already in `trip_record`) |
 | W7 | `trip_record` is keyed by service date and trip ID. Whether trip IDs stay stable when the static feed is republished mid-day is unverified. | Assumption | Store the static version on each record (already planned); check at the first observed republish |
 | W8 | Retention deletes `trip_record` rows after 35 days. If the nightly rollup was wrong, the source is gone. | Risk | Rollup must be verified against raw rows in tests; delete only days whose rollup exists |
-| W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption | Measure in M2.3 and after one week |
+| W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption, partly measured | M2.2 measured the static import at about 240 MB peak and 50 MB of database per version. The running service is still unmeasured: measure in M2.3 and after one week |
 | W10 | **Rate limiting is unspecified.** A public, unauthenticated API can be scraped; only cache headers protect it. | **Gap** | Decide in M2.4: a simple per-IP limit in the app, or at the host's proxy |
 | W11 | The basemap tile provider is undecided; it is a third-party dependency with its own terms and limits. | **Gap** | Decide in M3 before building the map |
 | W12 | The web app is served from the same container, with no CDN. | Accepted limit | Fine at MVP traffic; can move to a static host later without API changes if CORS is enabled |

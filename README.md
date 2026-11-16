@@ -2,7 +2,7 @@
 
 A Brisbane mobility intelligence platform built on TransLink's open public transport data.
 
-> **Status: planning.** There is no application code in this repository yet. It currently holds the product plan, technical discovery, an approved architecture and the analysis scripts used to verify the data. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
+> **Status: early development.** The backend skeleton and the static timetable importer exist and are tested. There is no real-time collection, API or web interface yet. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
 
 ## What it aims to do
 
@@ -20,6 +20,10 @@ Show what is happening on the South East Queensland public transport network now
 Discovery (M0): [Repository Audit](BRISPULSE-REPOSITORY-AUDIT.md) · [Data Source Research](BRISPULSE-DATA-SOURCE-RESEARCH.md) · [Metrics Feasibility](BRISPULSE-METRICS-FEASIBILITY.md) · [MVP Requirements](BRISPULSE-MVP-REQUIREMENTS.md) · [Technical Handoff](BRISPULSE-TECHNICAL-HANDOFF.md)
 
 Scripts used to verify the live feeds are in [`discovery/probes/`](discovery/probes/).
+
+## Code
+
+The service lives in [`backend/`](backend/); see its [README](backend/README.md) for setup and commands.
 
 ## Data and attribution
 
