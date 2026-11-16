@@ -417,6 +417,7 @@ class TestMetricDefinitions:
             "Fresh vehicles",
             "Running trips",
             "Predicted delay",
+            "Real-time coverage",
             "Active alerts",
         ]
         assert all(m["definition"] and m["source"] and m["limitations"] for m in data["metrics"])

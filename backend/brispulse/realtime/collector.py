@@ -183,11 +183,14 @@ class Collector:
         get_reference: Callable[[], Reference | None],
         record_fetch: Callable[[FetchRecord], None],
         *,
+        on_publish: Callable[[FeedName], None] | None = None,
         thresholds: Thresholds = DEFAULT_THRESHOLDS,
         clock: Callable[[], float] = time.time,
     ) -> None:
         self._settings = settings
         self._client = client
+        # Told about every newly published snapshot (the history recorder listens).
+        self._on_publish = on_publish
         self._state = state
         self._get_reference = get_reference
         self._record_fetch = record_fetch
@@ -304,6 +307,12 @@ class Collector:
         # Only a response that was accepted may be used for the next conditional request.
         memory.last_modified = response.headers.get("last-modified")
         self._state.publish(snapshot)
+        if self._on_publish is not None:
+            try:
+                self._on_publish(feed)
+            except Exception:
+                # A listener's failure must not cost the data that was just collected.
+                logger.exception("listener failed after publishing %s", feed.value)
         return dataclasses.replace(
             record,
             accepted_count=snapshot.stats.accepted,

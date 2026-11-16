@@ -53,6 +53,7 @@ def get_context(request: Request) -> Context:
         reference=runtime.reference.current,
         now=request.app.state.clock(),
         settings=request.app.state.settings or get_settings(),
+        latest_samples=runtime.history.latest_samples if runtime.history is not None else (),
     )
 
 

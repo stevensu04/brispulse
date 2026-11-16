@@ -264,3 +264,29 @@ async def test_the_polling_loop_survives_an_unexpected_error(
         await task
 
     assert len(calls) >= 3
+
+
+async def test_a_listener_hears_of_each_published_snapshot_only() -> None:
+    heard: list[FeedName] = []
+    harness = Harness()
+    harness.collector._on_publish = heard.append
+
+    await harness.poll(ok(feed_bytes(vehicle())))
+    await harness.poll(httpx2.Response(304))
+    await harness.poll(httpx2.Response(503))
+    await harness.poll(ok(feed_bytes(trip_update(), timestamp=NOW)), FeedName.TRIP_UPDATES)
+
+    assert heard == [FeedName.VEHICLE_POSITIONS, FeedName.TRIP_UPDATES]
+
+
+async def test_a_failing_listener_does_not_cost_the_collected_data() -> None:
+    def broken(feed: FeedName) -> None:
+        raise RuntimeError("listener bug")
+
+    harness = Harness()
+    harness.collector._on_publish = broken
+
+    record = await harness.poll(ok(feed_bytes(vehicle())))
+
+    assert record.outcome is Outcome.OK
+    assert harness.state.current.vehicles is not None

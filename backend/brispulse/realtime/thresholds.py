@@ -48,6 +48,19 @@ class Thresholds:
     # Starting value.
     static_mismatch_fraction: float = 0.02
 
+    # --- history (architecture §4.3) ---
+    # A trip not seen running for this long is taken to have finished. Starting value.
+    trip_finished_after_s: int = 600
+    # A trip needs this many delay observations to enter route statistics: with a
+    # 60 s poll a very short trip yields only one or two (architecture §17, W6).
+    # Starting value.
+    min_observations_per_trip: int = 3
+    # A service day is closed for rollup this long after its midnight. The latest trip
+    # in the schedule ended at 30:33 when measured on 2026-11-16. Starting value.
+    service_day_closes_after_s: int = 31 * 3600
+    # Trend charts stay hidden until this many service days have been rolled up.
+    min_trend_days: int = 7
+
 
 DEFAULT_THRESHOLDS = Thresholds()
 

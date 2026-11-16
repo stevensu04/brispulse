@@ -81,7 +81,12 @@ def engine(database_url: str) -> Iterator[Engine]:
 def session_factory(engine: Engine) -> Iterator[sessionmaker[Session]]:
     yield make_session_factory(engine)
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE static_version, feed_fetch RESTART IDENTITY CASCADE"))
+        connection.execute(
+            text(
+                "TRUNCATE static_version, feed_fetch, trip_record, network_sample, "
+                "alert_record, route_day_stats RESTART IDENTITY CASCADE"
+            )
+        )
 
 
 @pytest.fixture

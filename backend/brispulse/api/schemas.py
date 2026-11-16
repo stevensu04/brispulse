@@ -132,10 +132,26 @@ class AlertOverview(BaseModel):
     active_other: int
 
 
+class CoverageCounts(BaseModel):
+    """Of the trips the schedule says are in progress, how many have live data."""
+
+    trips_scheduled: int
+    # None when that feed was not usable at the time of the sample.
+    trips_with_update: int | None
+    trips_with_vehicle: int | None
+
+
+class CoverageOut(CoverageCounts):
+    # Coverage is computed on the clock, every few minutes, not per request.
+    sampled_at: dt.datetime
+    by_mode: dict[str, CoverageCounts]
+
+
 class OverviewData(BaseModel):
     vehicles: VehicleOverview | None
     trips: TripOverview | None
     alerts: AlertOverview | None
+    coverage: CoverageOut | None
 
 
 # --- vehicles ---------------------------------------------------------------------

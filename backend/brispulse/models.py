@@ -24,7 +24,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Explicit constraint names keep migrations deterministic across databases.
@@ -195,3 +195,132 @@ class FeedFetch(Base):
     static_version_id: Mapped[int | None] = mapped_column(Integer)
 
     __table_args__ = (Index("ix_feed_fetch_feed_fetched_at", "feed", "fetched_at"),)
+
+
+class TripRecord(Base):
+    """One trip on one service day, summarised from its observations while running.
+
+    Each observation is TransLink's predicted delay at the trip's next stop, taken when
+    the trip-updates feed was fetched. The unit of analysis for route statistics is the
+    trip, not the observation: a long trip is sampled many more times than a short one,
+    and counting observations would let it dominate (architecture §2.3, §6.2).
+    """
+
+    __tablename__ = "trip_record"
+
+    service_date: Mapped[dt.date] = mapped_column(Date, primary_key=True)
+    trip_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    route_id: Mapped[str | None] = mapped_column(Text)
+    mode: Mapped[str | None] = mapped_column(String(16))
+    relationship: Mapped[str] = mapped_column(String(24))
+    vehicle_id: Mapped[str | None] = mapped_column(Text)
+    static_version_id: Mapped[int] = mapped_column(Integer)
+    first_obs_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    last_obs_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    # Observations that carried a plausible delay; the figures below summarise these.
+    obs_count: Mapped[int] = mapped_column(Integer)
+    delay_median_s: Mapped[int | None] = mapped_column(Integer)
+    delay_min_s: Mapped[int | None] = mapped_column(Integer)
+    delay_max_s: Mapped[int | None] = mapped_column(Integer)
+    delay_last_s: Mapped[int | None] = mapped_column(Integer)
+    early_obs_count: Mapped[int] = mapped_column(Integer)
+    late_obs_count: Mapped[int] = mapped_column(Integer)
+    # Observations left out: delay beyond the plausible range, or no delay given.
+    implausible_count: Mapped[int] = mapped_column(Integer)
+    without_delay_count: Mapped[int] = mapped_column(Integer)
+    # False while the trip is still being observed.
+    completed: Mapped[bool] = mapped_column(Boolean)
+    # Raw delays, kept only while the trip is in flight so a restart can resume it.
+    samples: Mapped[list[int] | None] = mapped_column(ARRAY(Integer))
+
+    __table_args__ = (
+        Index("ix_trip_record_date_route", "service_date", "route_id"),
+        Index(
+            "ix_trip_record_in_flight",
+            "completed",
+            postgresql_where=text("NOT completed"),
+        ),
+    )
+
+
+class NetworkSample(Base):
+    """The state of the network at one moment, taken every five minutes (architecture §4.3).
+
+    One row per mode plus an ``all`` row. A metric is NULL when the feed it depends on
+    was not usable at that moment: the gap is recorded as a gap, never as zero.
+    """
+
+    __tablename__ = "network_sample"
+
+    sampled_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+    mode: Mapped[str] = mapped_column(String(16), primary_key=True)
+    static_version_id: Mapped[int | None] = mapped_column(Integer)
+    vehicle_positions_state: Mapped[str] = mapped_column(String(16))
+    trip_updates_state: Mapped[str] = mapped_column(String(16))
+    alerts_state: Mapped[str] = mapped_column(String(16))
+    vehicles_fresh: Mapped[int | None] = mapped_column(Integer)
+    vehicles_last_seen: Mapped[int | None] = mapped_column(Integer)
+    trips_running: Mapped[int | None] = mapped_column(Integer)
+    # Real-time coverage: scheduled trips in progress, and how many had live data.
+    trips_scheduled: Mapped[int | None] = mapped_column(Integer)
+    trips_with_update: Mapped[int | None] = mapped_column(Integer)
+    trips_with_vehicle: Mapped[int | None] = mapped_column(Integer)
+    delay_sample_size: Mapped[int | None] = mapped_column(Integer)
+    delay_median_s: Mapped[int | None] = mapped_column(Integer)
+    delay_p90_s: Mapped[int | None] = mapped_column(Integer)
+    delay_early: Mapped[int | None] = mapped_column(Integer)
+    delay_within_band: Mapped[int | None] = mapped_column(Integer)
+    delay_late: Mapped[int | None] = mapped_column(Integer)
+    delay_excluded_implausible: Mapped[int | None] = mapped_column(Integer)
+    # Alerts are network-wide: filled on the ``all`` row only.
+    alerts_active: Mapped[int | None] = mapped_column(Integer)
+    alerts_active_planned_works: Mapped[int | None] = mapped_column(Integer)
+
+
+class AlertRecord(Base):
+    """A service alert as it appeared in the feed, and for how long.
+
+    The key includes a hash of the content, so an alert whose text or periods change
+    gets a new row and the earlier wording is preserved.
+    """
+
+    __tablename__ = "alert_record"
+
+    alert_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    content_hash: Mapped[str] = mapped_column(String(40), primary_key=True)
+    first_seen_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    cause: Mapped[str] = mapped_column(String(32))
+    effect: Mapped[str] = mapped_column(String(32))
+    header: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(Text)
+    active_periods: Mapped[list[Any]] = mapped_column(JSONB)
+    route_ids: Mapped[list[Any]] = mapped_column(JSONB)
+    stop_ids: Mapped[list[Any]] = mapped_column(JSONB)
+
+    __table_args__ = (Index("ix_alert_record_last_seen", "last_seen_at"),)
+
+
+class RouteDayStats(Base):
+    """One route on one finished service day, rolled up from ``trip_record``.
+
+    Percentiles are taken across trips (each trip contributes its median delay) and are
+    NULL when too few trips were observed.
+    """
+
+    __tablename__ = "route_day_stats"
+
+    service_date: Mapped[dt.date] = mapped_column(Date, primary_key=True)
+    route_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    mode: Mapped[str | None] = mapped_column(String(16))
+    # Trips with enough observations to count.
+    trips_observed: Mapped[int] = mapped_column(Integer)
+    # From the static schedule; NULL if it could not be determined for that date.
+    trips_scheduled: Mapped[int | None] = mapped_column(Integer)
+    delay_p50_s: Mapped[int | None] = mapped_column(Integer)
+    delay_p90_s: Mapped[int | None] = mapped_column(Integer)
+    trips_early: Mapped[int] = mapped_column(Integer)
+    trips_within_band: Mapped[int] = mapped_column(Integer)
+    trips_late: Mapped[int] = mapped_column(Integer)
+    computed_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))

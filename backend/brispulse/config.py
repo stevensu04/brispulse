@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     # Turn off to run the HTTP application without contacting TransLink.
     collector_enabled: bool = True
 
+    # History (architecture §4.3): turn off to collect without storing anything.
+    history_enabled: bool = True
+    history_sample_interval_seconds: float = 300.0
+    history_maintenance_seconds: float = 3600.0
+    # Rows older than this are deleted. Trip records go only once their day is rolled up.
+    feed_fetch_retention_days: int = 30
+    trip_record_retention_days: int = 35
+
     # How often to ask whether TransLink has published a new static schedule.
     static_check_interval_seconds: float = 6 * 3600.0
     # GTFS times are local to the agency (agency.txt: Australia/Brisbane).

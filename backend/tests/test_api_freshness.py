@@ -21,7 +21,12 @@ class TestNothingFetchedYet:
     def test_overview_values_are_null(self) -> None:
         body = Service().get("/api/v1/overview").json()
 
-        assert body["data"] == {"vehicles": None, "trips": None, "alerts": None}
+        assert body["data"] == {
+            "vehicles": None,
+            "trips": None,
+            "alerts": None,
+            "coverage": None,
+        }
         states = {feed: info["state"] for feed, info in body["meta"]["feeds"].items()}
         assert set(states.values()) == {"unavailable"}
         assert all(

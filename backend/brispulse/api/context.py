@@ -1,13 +1,14 @@
 """Everything one request needs to answer from the live state, captured at one instant."""
 
 import datetime as dt
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from functools import cached_property
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from brispulse.api.schemas import FeedMeta, StaticMeta
 from brispulse.config import Settings
+from brispulse.history.sampling import NetworkSampleRow
 from brispulse.realtime.collector import FetchRecord
 from brispulse.realtime.freshness import Freshness, data_is_usable, feed_freshness
 from brispulse.realtime.model import FeedName, FeedSnapshot, LiveState
@@ -25,6 +26,7 @@ class Context:
         reference: Reference | None,
         now: float,
         settings: Settings,
+        latest_samples: Sequence[NetworkSampleRow] = (),
         thresholds: Thresholds = DEFAULT_THRESHOLDS,
     ) -> None:
         # ``state`` is immutable, so the whole request sees one consistent picture even
@@ -34,6 +36,8 @@ class Context:
         self.reference = reference
         self.now = now
         self.settings = settings
+        # The most recent five-minute network sample, if history is being recorded.
+        self.latest_samples = latest_samples
         self.thresholds = thresholds
         self.timezone = ZoneInfo(settings.service_timezone)
 

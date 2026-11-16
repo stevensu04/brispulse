@@ -25,6 +25,12 @@ FEED_PATHS: Mapping[FeedName, str] = {
 }
 
 
+# Alerts with these causes are labelled planned works. The label is deliberately narrow:
+# in the live feed on 2026-11-16, alerts filed under "other_cause" included planned
+# timetable changes and general notices, so the remaining alerts are not all incidents.
+PLANNED_WORKS_CAUSES = frozenset({"construction", "maintenance"})
+
+
 @dataclass(frozen=True, slots=True)
 class Vehicle:
     vehicle_id: str

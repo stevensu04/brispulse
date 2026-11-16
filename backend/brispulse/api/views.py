@@ -15,6 +15,8 @@ from brispulse.api.schemas import (
     ActivePeriodOut,
     AlertOut,
     AlertOverview,
+    CoverageCounts,
+    CoverageOut,
     DelaySummaryOut,
     FeedStatus,
     MetricDefinition,
@@ -35,17 +37,20 @@ from brispulse.api.schemas import (
     VehicleOverview,
 )
 from brispulse.delay_stats import DelaySummary, summarise_delays
-from brispulse.realtime.model import Alert, FeedName, TripState, Vehicle
+from brispulse.history.sampling import ALL as ALL_MODES
+from brispulse.history.sampling import NetworkSampleRow
+from brispulse.realtime.model import (
+    PLANNED_WORKS_CAUSES,
+    Alert,
+    FeedName,
+    TripState,
+    Vehicle,
+)
 from brispulse.realtime.populations import RunningTrip, service_start_epoch
 from brispulse.realtime.reference import Reference
 from brispulse.realtime.thresholds import FRESHNESS_LIMITS
 
 VP, TU, ALERTS = FeedName.VEHICLE_POSITIONS, FeedName.TRIP_UPDATES, FeedName.ALERTS
-
-# Alerts with these causes are labelled planned works. The label is deliberately narrow:
-# in the live feed on 2026-11-16, alerts filed under "other_cause" included planned
-# timetable changes and general notices, so the remaining alerts are not all incidents.
-PLANNED_WORKS_CAUSES = frozenset({"construction", "maintenance"})
 
 ATTRIBUTION = (
     "Contains Translink data © State of Queensland (Department of Transport and Main "
@@ -210,6 +215,38 @@ def status(context: Context) -> View[StatusData]:
 # --- overview ---------------------------------------------------------------------
 
 
+def _coverage(context: Context) -> tuple[CoverageOut | None, str | None]:
+    """Real-time coverage from the latest network sample, if it is recent enough."""
+    samples = {row.mode: row for row in context.latest_samples}
+    overall = samples.get(ALL_MODES)
+    if overall is None:
+        return None, "coverage: not computed yet; it is sampled every few minutes."
+    age = context.now - overall.sampled_at.timestamp()
+    # A sample labels the start of its interval, so allow two intervals before it is old.
+    if age > 2 * context.settings.history_sample_interval_seconds:
+        return None, f"coverage: the latest sample is {int(age)} s old and is withheld."
+    if overall.trips_scheduled is None:
+        return None, "coverage: the schedule could not be consulted for the latest sample."
+
+    def counts(row: NetworkSampleRow) -> CoverageCounts:
+        return CoverageCounts(
+            trips_scheduled=row.trips_scheduled or 0,
+            trips_with_update=row.trips_with_update,
+            trips_with_vehicle=row.trips_with_vehicle,
+        )
+
+    coverage = CoverageOut(
+        **counts(overall).model_dump(),
+        sampled_at=context.at(overall.sampled_at.timestamp()),
+        by_mode={
+            mode: counts(row)
+            for mode, row in samples.items()
+            if mode != ALL_MODES and row.trips_scheduled is not None
+        },
+    )
+    return coverage, None
+
+
 def overview(context: Context) -> View[OverviewData]:
     vehicles = context.usable(VP)
     trips = context.usable(TU)
@@ -252,13 +289,19 @@ def overview(context: Context) -> View[OverviewData]:
             active_other=len(active) - planned,
         )
 
+    coverage, coverage_note = _coverage(context)
+
     notes = _notes(context, VP, TU, ALERTS)
+    if coverage_note:
+        notes.append(coverage_note)
     if trip_overview is not None:
         notes.append(
             "Delay figures are TransLink's predictions for the next stop of trips that are "
             "running. They are not observed arrivals and not on-time performance."
         )
-    data = OverviewData(vehicles=vehicle_overview, trips=trip_overview, alerts=alert_overview)
+    data = OverviewData(
+        vehicles=vehicle_overview, trips=trip_overview, alerts=alert_overview, coverage=coverage
+    )
     return View(data, (VP, TU, ALERTS), notes)
 
 
@@ -529,6 +572,19 @@ def metric_definitions(context: Context) -> MetricsData:
                     "A prediction made mid-trip, not an observed arrival. It is not "
                     "on-time performance and is not comparable to TransLink's published "
                     "punctuality figures. The band limits are BrisPulse's own."
+                ),
+            ),
+            MetricDefinition(
+                name="Real-time coverage",
+                definition=(
+                    "Of the trips the static schedule says are between their first and "
+                    "last stop, the number that have a trip update and the number that "
+                    "have a fresh vehicle. Computed every five minutes."
+                ),
+                source=f"{source}: TripUpdates and VehiclePositions, with the GTFS schedule",
+                limitations=(
+                    "A trip running early or late against the schedule is counted as "
+                    "scheduled or not by its timetable, not by where the vehicle is."
                 ),
             ),
             MetricDefinition(

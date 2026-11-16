@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from brispulse.config import Settings
 from brispulse.db import make_engine, make_session_factory
+from brispulse.history.recorder import HistoryRecorder
 from brispulse.realtime.collector import Collector, LiveStateHolder
 from brispulse.realtime.fetch_log import make_fetch_recorder
 from brispulse.realtime.reference import Reference, active_version_id, load_reference
@@ -68,6 +69,8 @@ class Runtime:
 
     live: LiveStateHolder
     reference: HoldsReference
+    # None when history is turned off (and in tests that do not need it).
+    history: HistoryRecorder | None = None
 
 
 async def keep_reference_current(holder: ReferenceHolder) -> None:
@@ -118,12 +121,18 @@ async def running_service(settings: Settings) -> AsyncIterator[Runtime]:
         timeout=settings.realtime_timeout_seconds,
         follow_redirects=True,
     )
+    history = (
+        HistoryRecorder(settings, session_factory, live, lambda: reference.current)
+        if settings.history_enabled
+        else None
+    )
     collector = Collector(
         settings,
         client,
         live,
         lambda: reference.current,
         make_fetch_recorder(session_factory),
+        on_publish=history.on_publish if history is not None else None,
     )
     # Load the reference before the first poll. Otherwise every feed's first poll finds
     # nothing to validate against and waits a full interval before trying again.
@@ -136,11 +145,16 @@ async def running_service(settings: Settings) -> AsyncIterator[Runtime]:
         asyncio.create_task(keep_reference_current(reference), name="reference-refresh"),
         asyncio.create_task(collector.run(), name="collector"),
     ]
+    if history is not None:
+        tasks.append(asyncio.create_task(history.run(), name="history"))
     try:
-        yield Runtime(live=live, reference=reference)
+        yield Runtime(live=live, reference=reference, history=history)
     finally:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        if history is not None:
+            # After the tasks have stopped, so nothing else is writing.
+            await history.flush()
         await client.aclose()
         engine.dispose()
