@@ -37,8 +37,10 @@ jobs:
       BRISPULSE_TEST_DATABASE_URL: postgresql+psycopg://brispulse:brispulse@localhost:5432/brispulse_test
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      # This action publishes no moving major tag, so the exact release is pinned.
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
+          version: "0.13.8"
           enable-cache: true
           working-directory: backend
       - name: Install dependencies
