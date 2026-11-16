@@ -11,6 +11,8 @@ brispulse/              the Python package
   db.py, models.py      database engine and tables
   main.py               HTTP application
   gtfs_static/          import of TransLink's static GTFS schedule
+  realtime/             collector: fetch, decode, validate, freshness, running trips
+  runtime.py            background tasks that run alongside the HTTP application
 migrations/             Alembic database migrations
 tests/                  pytest suite
 ```
@@ -41,8 +43,17 @@ Then from `backend/`:
 uv sync
 uv run alembic upgrade head
 uv run python -m brispulse.gtfs_static import
-uv run uvicorn brispulse.main:app --reload
+uv run uvicorn brispulse.main:app
 ```
+
+Starting the service starts the collector: it polls TransLink's real-time feeds (vehicle
+positions every 30 s, trip updates every 60 s, alerts every 120 s by default), checks for
+a new static schedule every 6 hours, and writes one row per fetch to the `feed_fetch`
+table. Set `BRISPULSE_COLLECTOR_ENABLED=false` to run the HTTP application without
+contacting TransLink.
+
+**Run exactly one process.** Live state is held in memory, so do not start uvicorn with
+several workers, and avoid `--reload` while collecting (each reload starts over).
 
 ## Checks
 

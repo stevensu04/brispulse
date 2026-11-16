@@ -24,6 +24,21 @@ class Settings(BaseSettings):
     # Identifies this client to TransLink and says where to find its operator.
     user_agent: str = "BrisPulse/0.1 (+https://github.com/stevensu04/brispulse)"
 
+    realtime_path: str = "/api/realtime/SEQ"
+    # TransLink refreshes its feeds every 10-30 s (measured 2026-11-16). Polling faster
+    # than that returns nothing new. Defaults are the approved starting values.
+    poll_vehicle_positions_seconds: float = 30.0
+    poll_trip_updates_seconds: float = 60.0
+    poll_alerts_seconds: float = 120.0
+    realtime_timeout_seconds: float = 10.0
+    # Turn off to run the HTTP application without contacting TransLink.
+    collector_enabled: bool = True
+
+    # How often to ask whether TransLink has published a new static schedule.
+    static_check_interval_seconds: float = 6 * 3600.0
+    # GTFS times are local to the agency (agency.txt: Australia/Brisbane).
+    service_timezone: str = "Australia/Brisbane"
+
     static_download_timeout_seconds: float = 300.0
     # The SEQ zip was 43 MB when measured (2026-11-16). Anything far larger is not that file.
     static_max_download_bytes: int = 500 * 1024 * 1024

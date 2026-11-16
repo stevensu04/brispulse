@@ -164,3 +164,33 @@ class ServiceCalendarDate(Base):
     service_id: Mapped[str] = mapped_column(Text, primary_key=True)
     date: Mapped[dt.date] = mapped_column(Date, primary_key=True)
     exception_type: Mapped[int] = mapped_column(SmallInteger)
+
+
+class FeedFetch(Base):
+    """One attempt to fetch a real-time feed, successful or not (architecture §5.1).
+
+    This is the record of what BrisPulse retrieved and when. Gaps in collection show
+    up here as missing or failed rows; nothing is back-filled.
+    """
+
+    __tablename__ = "feed_fetch"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    feed: Mapped[str] = mapped_column(String(24))
+    fetched_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    duration_ms: Mapped[int] = mapped_column(Integer)
+    outcome: Mapped[str] = mapped_column(String(24))
+    http_status: Mapped[int | None] = mapped_column(SmallInteger)
+    body_bytes: Mapped[int | None] = mapped_column(Integer)
+    # The feed header's timestamp: when TransLink produced the data.
+    source_timestamp: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    entity_count: Mapped[int | None] = mapped_column(Integer)
+    accepted_count: Mapped[int | None] = mapped_column(Integer)
+    # Reason -> number of entities rejected for it.
+    rejected: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    anomaly: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    detail: Mapped[str | None] = mapped_column(Text)
+    # Not a foreign key: the log outlives pruned static versions.
+    static_version_id: Mapped[int | None] = mapped_column(Integer)
+
+    __table_args__ = (Index("ix_feed_fetch_feed_fetched_at", "feed", "fetched_at"),)

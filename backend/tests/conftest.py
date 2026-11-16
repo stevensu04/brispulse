@@ -81,7 +81,7 @@ def engine(database_url: str) -> Iterator[Engine]:
 def session_factory(engine: Engine) -> Iterator[sessionmaker[Session]]:
     yield make_session_factory(engine)
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE static_version RESTART IDENTITY CASCADE"))
+        connection.execute(text("TRUNCATE static_version, feed_fetch RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture
@@ -90,3 +90,9 @@ def settings(database_url: str) -> Settings:
         database_url=database_url,
         translink_base_url="https://translink.test",
     )
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """Async tests run on asyncio, the loop the service uses."""
+    return "asyncio"
