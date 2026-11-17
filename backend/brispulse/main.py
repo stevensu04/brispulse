@@ -4,12 +4,15 @@ The process also runs the collector (architecture §3.1). Because live state is 
 memory, the service must run as exactly one process: start it with a single worker.
 """
 
+import os
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.staticfiles import StaticFiles
 
 from brispulse import __version__
 from brispulse.api.errors import install_error_handlers
@@ -59,6 +62,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def healthz() -> dict[str, str]:
         # Liveness only: says the process is up, nothing about data freshness.
         return {"status": "ok"}
+
+    # Mounted last, so it only receives what no route above claimed. An unknown
+    # /api path still gets the API's JSON error, not the web app.
+    web_dir = (settings.web_dir if settings is not None else None) or os.environ.get(
+        "BRISPULSE_WEB_DIR"
+    )
+    if web_dir and Path(web_dir).is_dir():
+        app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")
 
     return app
 

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     # The SEQ zip was 43 MB when measured (2026-11-16). Anything far larger is not that file.
     static_max_download_bytes: int = 500 * 1024 * 1024
 
+    # Folder holding the built web app (frontend/dist). When set and present, the
+    # service serves it at "/", so one container is the whole product.
+    web_dir: str | None = None
+
     log_level: str = "INFO"
 
     @field_validator("database_url")

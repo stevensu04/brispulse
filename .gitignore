@@ -16,6 +16,7 @@ build/
 
 # Node
 node_modules/
+frontend/dist/
 
 # Downloaded data (reproducible; never commit raw feeds)
 *.zip
