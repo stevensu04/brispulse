@@ -5,6 +5,7 @@ import { Notes, QueryView } from "../components/States";
 import { formatClock } from "../lib/format";
 import { href } from "../lib/router";
 import { useBandLimits } from "../lib/useBandLimits";
+import { TableScroll } from "../components/TableScroll";
 
 /** One trip: where it is headed and TransLink's prediction for each stop still ahead. */
 export function TripPanel({
@@ -73,7 +74,7 @@ export function TripPanel({
                     <dd className="figures">{formatClock(realtime.scheduled_start)}</dd>
                   </dl>
                   {realtime.stops.length > 0 ? (
-                    <div className="table-wrap">
+                    <TableScroll label="Predicted times at the next stops">
                       <table>
                         <thead>
                           <tr>
@@ -97,7 +98,7 @@ export function TripPanel({
                       {realtime.stops.length > 12 ? (
                         <p className="small muted">and {realtime.stops.length - 12} more stops</p>
                       ) : null}
-                    </div>
+                    </TableScroll>
                   ) : null}
                 </>
               )}

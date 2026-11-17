@@ -5,6 +5,7 @@ import { Notes, QueryView } from "../components/States";
 import { type BandLimits, formatCount, sentenceCase } from "../lib/format";
 import { href } from "../lib/router";
 import { useBandLimits } from "../lib/useBandLimits";
+import { TableScroll } from "../components/TableScroll";
 
 /**
  * A count shown as a bar and a number. The bar is one neutral colour because it shows
@@ -33,7 +34,7 @@ function LateRoutes({ data, limits }: { data: NonNullable<AnalyticsNow["delays"]
   }
   return (
     <>
-      <div className="table-wrap">
+      <TableScroll label="Routes with the most late trips">
         <table>
           <thead>
             <tr>
@@ -61,7 +62,7 @@ function LateRoutes({ data, limits }: { data: NonNullable<AnalyticsNow["delays"]
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       <p className="small muted" style={{ marginTop: 8 }}>
         {formatCount(data.routes_with_late_trips)} of {formatCount(data.routes_with_running_trips)} routes with running trips have at least one late trip.
       </p>

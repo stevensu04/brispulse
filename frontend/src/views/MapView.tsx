@@ -162,7 +162,9 @@ export function MapView({ theme }: { theme: Theme }) {
 
   // The latest values, for map callbacks that outlive a render.
   const latest = useRef({ geojson, selectedId });
-  latest.current = { geojson, selectedId };
+  useEffect(() => {
+    latest.current = { geojson, selectedId };
+  }, [geojson, selectedId]);
 
   useEffect(() => {
     if (!container.current) return;

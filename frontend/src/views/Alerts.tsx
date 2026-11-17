@@ -19,7 +19,9 @@ function periodText(alert: Alert): string {
   return alert.active_periods.length === 0 ? "No period given" : "Ended";
 }
 
-export function AlertCard({ alert }: { alert: Alert }) {
+/** `headingLevel` keeps the page outline in order: 2 on the alerts page, 3 under a route's section. */
+export function AlertCard({ alert, headingLevel = 2 }: { alert: Alert; headingLevel?: 2 | 3 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <article className="card stack" style={{ gap: 8 }}>
       <div className="row">
@@ -27,7 +29,7 @@ export function AlertCard({ alert }: { alert: Alert }) {
         <span className="chip">{sentenceCase(alert.effect)}</span>
         <span className="chip">{alert.planned_works ? "Planned works" : sentenceCase(alert.cause)}</span>
       </div>
-      <h3 className="card-title">{alert.header ?? "Service alert"}</h3>
+      <Heading className="card-title">{alert.header ?? "Service alert"}</Heading>
       <p className="small secondary">{periodText(alert)}</p>
       {alert.description ? <p className="small">{alert.description}</p> : null}
       {alert.routes.length > 0 ? (

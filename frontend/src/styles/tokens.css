@@ -27,6 +27,9 @@
   --delay-early: #2a78d6;
   --delay-within: #b9b8b0;
   --delay-late: #e34948;
+  /* Darker steps for delay words: text needs 4.5:1, a bar or dot only 3:1. */
+  --delay-early-text: #1f63b8;
+  --delay-late-text: #c62828;
 
   --status-good: #0ca30c;
   --status-warning: #fab219;
@@ -62,6 +65,8 @@
     --delay-early: #3987e5;
     --delay-within: #5f5e58;
     --delay-late: #e66767;
+    --delay-early-text: #6ba3ee;
+    --delay-late-text: #e66767;
     --status-good-text: #4cc94c;
     --status-warning-text: #fab219;
     --status-serious-text: #f09a78;
@@ -87,6 +92,8 @@
   --delay-early: #3987e5;
   --delay-within: #5f5e58;
   --delay-late: #e66767;
+  --delay-early-text: #6ba3ee;
+  --delay-late-text: #e66767;
   --status-good-text: #4cc94c;
   --status-warning-text: #fab219;
   --status-serious-text: #f09a78;

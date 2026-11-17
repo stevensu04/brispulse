@@ -474,6 +474,11 @@ button {
 .table-wrap {
   overflow-x: auto;
 }
+.table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -570,10 +575,10 @@ button.list-item {
 }
 
 .delay-text[data-band="early"] {
-  color: var(--delay-early);
+  color: var(--delay-early-text);
 }
 .delay-text[data-band="late"] {
-  color: var(--delay-late);
+  color: var(--delay-late-text);
 }
 .delay-text {
   font-weight: 600;

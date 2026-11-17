@@ -8,6 +8,7 @@ import { type BandLimits, MODE_ORDER, formatCount, formatDelay } from "../lib/fo
 import { href } from "../lib/router";
 import { useBandLimits } from "../lib/useBandLimits";
 import { Insights } from "./Insights";
+import { TableScroll } from "../components/TableScroll";
 
 /** A headline number. When the value cannot be given it says so; it never shows 0. */
 function Tile({ label, value, detail }: { label: string; value: string | null; detail?: string }) {
@@ -34,7 +35,7 @@ function ByMode({ data, limits }: { data: OverviewData; limits: BandLimits }) {
       <h2 className="card-title" id="by-mode">
         By mode
       </h2>
-      <div className="table-wrap">
+      <TableScroll label="Figures by mode">
         <table>
           <thead>
             <tr>
@@ -66,7 +67,7 @@ function ByMode({ data, limits }: { data: OverviewData; limits: BandLimits }) {
             })}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
       <p className="small muted" style={{ marginTop: 8 }}>
         Late means predicted more than {Math.round(limits.lateSeconds / 60)} minutes late at the next stop.
       </p>
