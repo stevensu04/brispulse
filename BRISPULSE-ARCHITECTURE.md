@@ -267,8 +267,8 @@ Rules: unavailable values are `null` and explained in `meta.notes`, never `0`; t
 | `GET /api/v1/routes/{route_id}` | Route detail: running trips, vehicles, alerts, today's distribution |
 | `GET /api/v1/trips/{trip_id}` | Upcoming stops with predicted time and delay |
 | `GET /api/v1/alerts?active=&route_id=` | Alerts with periods, cause, effect, affected routes and stops |
-| `GET /api/v1/analytics/delays?group=mode\|route&window=now\|today` | Delay statistics with sample sizes |
-| `GET /api/v1/analytics/trends?metric=&from=&to=` | Daily series, or `data: null` with the number of days collected |
+| `GET /api/v1/analytics/now` | Late trips by route and active alerts by effect and cause, for the present moment. Built in M4 in place of the two endpoints below, which need stored history (§19) |
+| ~~`GET /api/v1/analytics/delays?…&window=today`~~, ~~`GET /api/v1/analytics/trends`~~ | Not built: they need stored history, which the live-only release does not keep |
 | `GET /api/v1/meta/metrics` | Machine-readable metric definitions and thresholds |
 | `GET /healthz` | Process liveness only |
 
@@ -359,19 +359,19 @@ A critical pass over the design above, written after approval. Items marked **Ga
 | --- | --- | --- | --- |
 | W1 | The evidence is three snapshots from 36 minutes of one weekday morning. Every threshold and volume estimate could be wrong for nights, weekends and disruptions. | Risk | The 24 h run (M2.3) and first-week review (M2.6) are mandatory gates, not optional |
 | W2 | **No backup or restore plan for PostgreSQL.** Collected history cannot be re-downloaded: upstream keeps none. | **Gap** | Add scheduled database dumps to M2.6 and test one restore; depends on the hosting choice (A5) |
-| W3 | **Nobody is told when the collector stops.** `/status` shows it, but only if someone looks. | **Gap** | Add an external uptime check on `/status` with a notification to the owner, in M2.6 |
+| W3 | Nobody was told when the service stopped. | **Addressed in M5** | A daily smoke check of the live site runs as a GitHub Actions workflow; GitHub emails the owner when a scheduled run fails (DEPLOY.md, Operations). It checks once a day, so an outage can go unnoticed for up to a day |
 | W4 | Single process: a crash or deploy stops collection, and up to 5 minutes of per-trip samples are lost between checkpoints. | Accepted limit | Gaps are recorded as gaps; state the limit publicly. Since M2.5 a clean shutdown writes in-flight trips and a start-up resumes them (verified live: 673 resumed, none lost observations); only a crash can lose up to five minutes |
 | W5 | Upstream gaps of 30 s were observed. With a 30 s poll, a vehicle position can be about 60 s old on arrival, leaving a thin margin under the 90 s `live` limit; the state may flicker between `live` and `delayed`. | Risk | Partly measured in M2.3: over 323 vehicle-position fetches the data was at most 36 s old when fetched, so with a 30 s poll it stays under about 66 s. No change needed so far; confirm on the 24-hour run |
 | W6 | A 60 s TripUpdates poll gives few observations for short trips, so a per-trip median can rest on one or two samples. | Risk | Require a minimum number of observations (3 **[P]**) before a trip enters route statistics; store the count (already in `trip_record`). Implemented in M2.5's rollup |
 | W7 | `trip_record` is keyed by service date and trip ID. Whether trip IDs stay stable when the static feed is republished mid-day is unverified. | Assumption | Store the static version on each record (already planned); check at the first observed republish |
 | W8 | Retention deletes `trip_record` rows after 35 days. If the nightly rollup was wrong, the source is gone. | Risk | Rollup must be verified against raw rows in tests; delete only days whose rollup exists. Implemented and tested in M2.5 |
 | W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption, partly measured | M2.2 measured the static import at about 240 MB peak and 50 MB of database per version. M2.3 measured the running service at 92–100 MB over 4 h 20 min with no growth, and the fetch log at about 2 MB per day. M2.4 raised it to about 140 MB by holding route, stop and trip names in memory. Still to measure: a full day, and history tables (M2.5) |
-| W10 | **Rate limiting is unspecified.** A public, unauthenticated API can be scraped; only cache headers protect it. | **Gap** | Decided in M2.4: not in the application. Responses come from memory in milliseconds with cache headers; a per-IP limit belongs at the host's proxy and is set with the hosting choice (A5) |
+| W10 | **No rate limiting.** A public, unauthenticated API can be scraped; only cache headers protect it. | Open, accepted | Responses come from memory in milliseconds and carry cache headers. Render's free service offers no proxy-level rate limit, and an in-app limiter would see one shared proxy address. Revisit if abuse appears |
 | W11 | The basemap tile provider is undecided; it is a third-party dependency with its own terms and limits. | **Gap** | Decided in M3: OpenFreeMap (OpenStreetMap data, free, no key or account, attribution shown by the map). It has no service guarantee; vehicles still draw if it is unreachable |
 | W12 | The web app is served from the same container, with no CDN. | Accepted limit | Fine at MVP traffic; can move to a static host later without API changes if CORS is enabled |
 | W13 | Several thresholds (delay bands, anomaly at 20 %, trend minimum of 7 days) are judgement calls. | Assumption | Kept in configuration and published in `/api/v1/meta/metrics`; reviewed after one week |
 | W14 | Real feed files used as test fixtures are TransLink data. | Compliance | Keep them small, attribute them in the repository, per CC BY 4.0 |
-| W15 | Accessibility and performance budgets are not designed here. | Deferred | M3 and M5 per the Master Plan |
+| W15 | Accessibility and performance budgets. | **Accessibility checked in M5** | axe-core found no violations on any screen in both themes and at phone width (after fixes); structural axe checks run in CI. No formal performance budget: the app's JavaScript is 91 kB compressed, the map 292 kB loaded on demand |
 
 Alternatives are compared in §3.2. The one I would revisit first if hosting cost becomes the constraint is SQLite on a volume, which removes the managed-database cost at the price of in-SQL percentiles.
 
