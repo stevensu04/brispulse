@@ -43,7 +43,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
 - [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
 - [x] Live-only mode (2026-11-16): the service runs with no database, reading the schedule straight from TransLink. Verified live: HTTP in 1.6 s, schedule in 10.9 s, all feeds live 12.4 s after start; about 150 MB of memory. The Docker image also ran within a 256 MB memory limit (106 MiB used)
-- [ ] M2.6 Deploy live-only on a free host. **Blocked on choosing the host.** Then measure its wake-up time and memory limit. The container to deploy now includes the web app
+- [ ] M2.6 Deploy live-only on Render's free web service. **Host chosen (2026-11-17); config ready (`render.yaml`, `DEPLOY.md`); waiting on the owner's Render account and on merging the branch to `main`.** Then measure the real wake-up time
 - [ ] ~~24-hour live run, one-week data review, database backups~~ — not applicable to a live-only release (Architecture §19.5)
 
 ### Measurements from M2.2 (one run, local machine)
@@ -102,7 +102,7 @@ The five-minute tick was shortened to one minute for this test, to see several c
 M4 is reduced to what the live API already provides (see the status table). M5 scope is as in the Master Plan §8.
 
 ## Open owner actions
-- **Choose the free host** for the live-only release. It must run a Docker container with at least about 256 MB of memory (the service uses about 150 MB) and no database. Candidates read on 2026-11-16: Render's free web service (sleeps after 15 minutes idle, about a minute to wake, nearest region Singapore; its memory limit was not readable from the pricing page) and Fly.io (Sydney region; no free tier, but invoices under US$5 are waived and a card is required). Neither has been tried.
+- **Create a Render account and connect the repository** (steps in `DEPLOY.md`), and approve merging `m2-data-pipeline` into `main`: Render deploys from `main`. Only you can create the account.
 - **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
 - Revisit the metric thresholds after the first week of collected data (A3).
 - **Rate limiting** (Architecture W10): not built into the application. Responses are served from memory in milliseconds and carry cache headers; a per-IP limit belongs at the host's proxy, so it is decided together with hosting (A5).

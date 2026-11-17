@@ -17,6 +17,8 @@ Show what is happening on the South East Queensland public transport network now
 | [Architecture](BRISPULSE-ARCHITECTURE.md) | Approved technical design |
 | [Changelog](BRISPULSE-CHANGELOG.md) | Notable changes |
 
+Deployment: [DEPLOY.md](DEPLOY.md)
+
 Discovery (M0): [Repository Audit](BRISPULSE-REPOSITORY-AUDIT.md) · [Data Source Research](BRISPULSE-DATA-SOURCE-RESEARCH.md) · [Metrics Feasibility](BRISPULSE-METRICS-FEASIBILITY.md) · [MVP Requirements](BRISPULSE-MVP-REQUIREMENTS.md) · [Technical Handoff](BRISPULSE-TECHNICAL-HANDOFF.md)
 
 Scripts used to verify the live feeds are in [`discovery/probes/`](discovery/probes/).

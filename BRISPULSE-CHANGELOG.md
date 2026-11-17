@@ -4,6 +4,13 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-17
 
+### Host chosen: Render free web service (deployment config added)
+- Chosen because it is the only option read on 2026-11-16 that is free without a trial limit, runs a Docker image, and has no database requirement for the live-only release. Per Render's docs (blueprint spec, free page): 0.1 CPU and 512 MB, 750 free instance hours a month, spins down after 15 minutes without inbound traffic, Singapore region available.
+- Added `render.yaml` (a Blueprint: Docker web service, free plan, Singapore, health check on `/healthz`, redeploy on every commit to `main`) and `DEPLOY.md`.
+- Measured locally with the image limited to Render's free CPU and memory: web server up after 17 s, timetable loaded after 43 s, live data after 46 s, 110 MiB of memory. Add Render's own wake-up of about a minute: a first visit after an idle spell waits one to two minutes.
+- Not done: the account and the first deploy. They need the owner's Render account, and `main` does not yet contain the web app.
+- Not verified: Render's build limits for free Docker services, and whether its health check tolerates the 17 s start-up; neither is stated in the pages read.
+
 ### M3 — Web app (Fable 5.2)
 - Added the dashboard in `frontend/`: overview, live map, routes and route detail, trip detail, alerts, and an about page with the metric definitions. React, TypeScript, Vite; MapLibre for the map.
 - The backend now serves the built web app, so one container is the whole product. The Docker image builds both.
