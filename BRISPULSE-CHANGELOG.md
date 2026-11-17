@@ -2,6 +2,19 @@
 
 Notable project changes, newest first. Planning and research entries are included until application code exists.
 
+## 2026-11-17
+
+### M3 — Web app (Fable 5.2)
+- Added the dashboard in `frontend/`: overview, live map, routes and route detail, trip detail, alerts, and an about page with the metric definitions. React, TypeScript, Vite; MapLibre for the map.
+- The backend now serves the built web app, so one container is the whole product. The Docker image builds both.
+- Interface rules: an unknown value is shown as "Unavailable" with the API's reason, never as zero; freshness is shown on every data view as an icon and a word; delay is written in words and described as a prediction.
+- A "waking up" screen for hosts that sleep, shown while requests are being retried.
+- Light and dark themes; phone and desktop layouts.
+- The web app's types are generated from `backend/openapi.json`; a backend test and a CI step fail if the API, that file or the types disagree.
+- Decisions: basemap tiles from OpenFreeMap (free, no key, attribution shown; closes Architecture W11); TypeScript pinned to 5.9 because the API type generator needs the TypeScript 5 compiler API; a hand-written hash router instead of a routing library; plain CSS with design tokens.
+- Found and fixed while checking in a browser: the map had zero height because the map library's own CSS overrode the layout; vehicle dots were too small to tap, so a tap now selects the nearest vehicle within a 44 px area; the freshness line quoted the age of the slowest feed (alerts) instead of the vehicle feed; the waking-up screen did not appear during retries.
+- Tests: 29 frontend, 385 backend.
+
 ## 2026-11-16
 
 ### Scope change — live-only first release (owner's decision)

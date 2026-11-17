@@ -11,11 +11,11 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
 | M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.5 and the live-only mode done on branch `m2-data-pipeline` | M2.6 is now "deploy live-only on a free host"; the free host is still to be chosen |
-| M3 Mobility Monitoring Dashboard | Not started | |
+| M3 Mobility Monitoring Dashboard | **Done locally** (2026-11-17) on branch `m2-data-pipeline` | Overview, live map, routes, trips, alerts, about. Not deployed; see the limits listed under M3 |
 | M4 Mobility Analytics | **Reduced** by the owner's decision of 2026-11-16 | Live figures (already in the API) stay. Trends and daily route statistics are out of the first release: they need stored history |
 | M5 Production Readiness and Deployment | Not started | |
 
-**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). **What does not exist yet:** the web app and any deployment.
+**What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). It now has a web app (overview, live map, routes, trips, alerts, about) served by the same container. **What does not exist yet:** any public deployment.
 
 **Scope change (owner's decision, 2026-11-16):** the first release is a live-only dashboard on free hosting, with no stored history. The service runs without a database in that mode. The history code stays in the repository, tested and switched off. See Architecture §19 and Amendment 1 in the Master Plan.
 
@@ -43,7 +43,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
 - [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
 - [x] Live-only mode (2026-11-16): the service runs with no database, reading the schedule straight from TransLink. Verified live: HTTP in 1.6 s, schedule in 10.9 s, all feeds live 12.4 s after start; about 150 MB of memory. The Docker image also ran within a 256 MB memory limit (106 MiB used)
-- [ ] M2.6 Deploy live-only on a free host. **Blocked on choosing the host.** Then measure its wake-up time and memory limit
+- [ ] M2.6 Deploy live-only on a free host. **Blocked on choosing the host.** Then measure its wake-up time and memory limit. The container to deploy now includes the web app
 - [ ] ~~24-hour live run, one-week data review, database backups~~ — not applicable to a live-only release (Architecture §19.5)
 
 ### Measurements from M2.2 (one run, local machine)
@@ -76,8 +76,30 @@ The five-minute tick was shortened to one minute for this test, to see several c
 - Storage after 13 minutes: `trip_record` 496 kB for 746 rows (about 0.66 kB per row while raw observations are attached). At roughly 20,000 trips a day that is on the order of 10 MB a day, and about 350 MB for 35 days. **This is an extrapolation from 13 minutes and needs a real day to confirm**; if it holds, shorten the 35-day retention on a small database.
 - Service memory: about 100 MB.
 
-## M3–M5
-Scope as in the Master Plan §8. Detailed steps will be added here when M2 is under way.
+## M3 — Mobility Monitoring Dashboard (done locally, 2026-11-17)
+- [x] React + TypeScript web app in `frontend/`, served by the backend container
+- [x] Overview: vehicles reporting, running trips, median predicted delay, active alerts, delay bands, by-mode table
+- [x] Live map of vehicle positions, coloured by delay band, with mode filter and a detail panel showing the trip's next stops
+- [x] Routes list (search, mode filter) and route detail (running trips, alerts); trip detail
+- [x] Alerts list
+- [x] About page: metric definitions and attribution, read from the API
+- [x] Loading, waking-up, unavailable, error and empty states; freshness shown on every data view
+- [x] Light and dark themes; phone (375 px) and desktop (1280 px) layouts checked in a browser
+- [x] API types generated from the backend's OpenAPI document; CI fails if they drift
+
+**Acceptance (Master Plan §8, M3):** the app uses only the real API; nothing is mocked or fabricated; loading, empty and error states exist; responsive behaviour and freshness display were checked against live TransLink data.
+
+**Measured (local, live data, 2026-11-17):** the full container was live 5.6 s after start and used 114 MiB with a 256 MB limit. JavaScript: 91 kB compressed for the app, plus 292 kB for the map, loaded only when the map is opened. 29 frontend tests, 385 backend tests.
+
+**Known limits:**
+- The map itself has no automated test (it needs WebGL); it was checked by hand. The other views have component tests.
+- Vehicles on the map cannot be selected by keyboard. The same information is reachable as text under Routes.
+- No end-to-end browser test in CI and no linter for the frontend yet (M5).
+- The basemap comes from OpenFreeMap, a free third-party service with no guarantee.
+- The "waking up" screen is covered by a test but was not observed on a real sleeping host, because nothing is deployed.
+
+## M4–M5
+M4 is reduced to what the live API already provides (see the status table). M5 scope is as in the Master Plan §8.
 
 ## Open owner actions
 - **Choose the free host** for the live-only release. It must run a Docker container with at least about 256 MB of memory (the service uses about 150 MB) and no database. Candidates read on 2026-11-16: Render's free web service (sleeps after 15 minutes idle, about a minute to wake, nearest region Singapore; its memory limit was not readable from the pricing page) and Fly.io (Sydney region; no free tier, but invoices under US$5 are waived and a card is required). Neither has been tried.
