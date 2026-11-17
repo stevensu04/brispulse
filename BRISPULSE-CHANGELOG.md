@@ -4,6 +4,23 @@ Notable project changes, newest first. Planning and research entries are include
 
 ## 2026-11-17
 
+### M5 — Production readiness
+- Security and caching headers on every response, including a content security policy that allows only this site and the map tiles.
+- Dependency audit: no known vulnerabilities in either the Python or the Node dependencies; a weekly workflow repeats it.
+- Frontend linter in CI (TypeScript, React hooks, strict accessibility rules). It found a ref being written during render in the map view; fixed.
+- Accessibility: an axe-core audit of every screen in both themes and at phone width found four problems, all fixed: delay text below 4.5:1 contrast in the light theme (darker text colours added; bars and dots keep the brighter ones), a skipped heading level on the alerts page, a sideways-scrolling table that keyboard users could not reach, and a brief flash of the wrong theme on reload (a small script now applies the saved theme before the page paints). Structural axe checks now run in CI.
+- Smoke check (`python -m brispulse.smoke URL`) that waits for a sleeping host and checks the process, web app, headers, feeds and data; it runs daily against the live site.
+- Operations notes in `DEPLOY.md`.
+- iCloud Drive duplicate files (such as `App 2.tsx`) are now ignored by git.
+
+### M4 — Live analytics (reduced by Amendment 1)
+- New endpoint `/api/v1/analytics/now`: routes with the most late running trips, and active alerts by effect, by cause and by most-named route. Counts for the present moment only.
+- Shown on the overview as "Where the delays are now" and "Active alerts by effect".
+- Published as a metric definition ("Late trips by route") with its limits.
+
+### Real wake-up time measured on Render
+- After an idle spell, the first request was answered in 23 s and all feeds were live 35 s after it: about half the earlier estimate of one to two minutes. One measurement.
+
 ### Deployed to Render (live-only first release)
 - Merged `m2-data-pipeline` into `main` through pull request #1, after rewriting the merge commit's author to the owner's gmail identity (see the roadmap for the GitHub email note).
 - Created the Render Blueprint from `main`: one Docker web service on the Free instance type, Singapore region, health check on `/healthz`.

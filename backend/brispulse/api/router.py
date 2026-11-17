@@ -11,6 +11,7 @@ from brispulse.api.context import Context
 from brispulse.api.errors import ApiError
 from brispulse.api.schemas import (
     AlertOut,
+    AnalyticsNow,
     Envelope,
     ErrorResponse,
     Meta,
@@ -180,6 +181,12 @@ def get_alerts(
     """Service alerts, active ones first."""
     view = views.alerts(context, reference, active=active, route_id=route_id, stop_id=stop_id)
     return respond(request, context, view)
+
+
+@router.get("/analytics/now", response_model=Envelope[AnalyticsNow], responses=_ERRORS)
+def get_analytics_now(request: Request, context: ContextDep, reference: ReferenceDep) -> Response:
+    """Where the delays and disruptions are right now: late trips by route, alerts by effect."""
+    return respond(request, context, views.analytics_now(context, reference))
 
 
 @router.get("/meta/metrics", response_model=Envelope[MetricsData])

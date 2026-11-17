@@ -100,6 +100,7 @@ and the OpenAPI document at `/openapi.json`.
 | `GET /api/v1/routes/{route_id}` | One route: vehicles, running trips, alerts |
 | `GET /api/v1/trips/{trip_id}` | One trip: predicted times and delays at upcoming stops |
 | `GET /api/v1/alerts` | Service alerts; filters `active`, `route_id`, `stop_id` |
+| `GET /api/v1/analytics/now` | Late trips by route, active alerts by effect and cause (this moment only) |
 | `GET /api/v1/meta/metrics` | Metric definitions, thresholds, attribution |
 | `GET /healthz` | Process liveness only |
 
@@ -132,3 +133,4 @@ locally and fail in CI. Warnings are treated as errors.
 | `python -m brispulse.gtfs_static import` | Download, validate and load the static GTFS file if it changed |
 | `python -m brispulse.gtfs_static import --file PATH` | Load a zip that is already on disk |
 | `alembic upgrade head` | Apply database migrations |
+| `python -m brispulse.smoke URL` | Check a running deployment from the outside (see `../DEPLOY.md`) |

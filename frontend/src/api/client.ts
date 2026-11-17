@@ -21,6 +21,8 @@ export type TripBrief = Schemas["TripBrief"];
 export type TripDetail = Schemas["TripDetail"];
 export type Alert = Schemas["AlertOut"];
 export type MetricsData = Schemas["MetricsData"];
+export type AnalyticsNow = Schemas["AnalyticsNow"];
+export type RouteLateness = Schemas["RouteLateness"];
 
 /** Every response has this shape. `data` is null when it cannot be given. */
 export interface Envelope<T> {

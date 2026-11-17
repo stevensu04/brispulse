@@ -75,6 +75,8 @@ jobs:
         run: |
           npm run api:types
           git diff --exit-code -- src/api/schema.d.ts
+      - name: Lint (including accessibility rules)
+        run: npm run lint
       - name: Type check
         run: npm run typecheck
       - name: Test

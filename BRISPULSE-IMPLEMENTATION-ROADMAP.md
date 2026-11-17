@@ -10,10 +10,10 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **Done for the first release** — M2.1 to M2.6 done; merged to `main` 2026-11-17 | Deployed at https://brispulse.onrender.com. Remaining: measure the real wake-up time after an idle spell |
+| M2 Data Pipeline and Backend | **Done for the first release** — M2.1 to M2.6; merged to `main` 2026-11-17 | Deployed at https://brispulse.onrender.com. Real wake-up on Render measured: 23 s to first answer, 35 s to live data |
 | M3 Mobility Monitoring Dashboard | **Done and deployed** (2026-11-17) | Overview, live map, routes, trips, alerts, about. See the limits listed under M3 |
-| M4 Mobility Analytics | **Reduced** by the owner's decision of 2026-11-16 | Live figures (already in the API) stay. Trends and daily route statistics are out of the first release: they need stored history |
-| M5 Production Readiness and Deployment | Not started | |
+| M4 Mobility Analytics | **Done, reduced** (2026-11-17) | Live analytics endpoint and "where the delays are now" on the overview. Trends and daily route statistics stay out: they need stored history (Amendment 1) |
+| M5 Production Readiness and Deployment | **Done** (2026-11-17) | Security headers, dependency audit, frontend linter, accessibility audit, daily smoke check, operations notes. Limits listed under M5 |
 
 **What exists in code:** the backend skeleton, the static GTFS importer and the real-time collector (fetch, validation, freshness rules, fetch log), with tests. It also serves the live data through a JSON API (`/api/v1`) and records history (per-trip delay summaries, five-minute network samples with real-time coverage, alert history, daily per-route rollups). It now has a web app (overview, live map, routes, trips, alerts, about) served by the same container. **What does not exist yet:** any public deployment.
 
@@ -44,7 +44,7 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
 - [x] Live-only mode (2026-11-16): the service runs with no database, reading the schedule straight from TransLink. Verified live: HTTP in 1.6 s, schedule in 10.9 s, all feeds live 12.4 s after start; about 150 MB of memory. The Docker image also ran within a 256 MB memory limit (106 MiB used)
 - [x] M2.6 Deployed live-only on Render's free web service (2026-11-17): https://brispulse.onrender.com, from `main` commit `bcd9943`. Health check, status and map checked on the live site
-- [ ] Measure the real wake-up time on Render after the service has been idle for 15 minutes
+- [x] Measured the real wake-up time on Render (2026-11-17 22:22, after an idle spell): first answer after 23 s, all feeds live 35 s after the first request
 - [ ] ~~24-hour live run, one-week data review, database backups~~ — not applicable to a live-only release (Architecture §19.5)
 
 ### Measurements from M2.2 (one run, local machine)
@@ -95,18 +95,40 @@ The five-minute tick was shortened to one minute for this test, to see several c
 **Known limits:**
 - The map itself has no automated test (it needs WebGL); it was checked by hand. The other views have component tests.
 - Vehicles on the map cannot be selected by keyboard. The same information is reachable as text under Routes.
-- No end-to-end browser test in CI and no linter for the frontend yet (M5).
+- No end-to-end browser test in CI (the frontend linter and automated accessibility checks were added in M5).
 - The basemap comes from OpenFreeMap, a free third-party service with no guarantee.
-- The "waking up" screen is covered by a test but was not observed on a real sleeping host, because nothing is deployed.
+- The "waking up" screen is covered by a test; on the live site the wait it covers was measured at about half a minute.
 
-## M4–M5
-M4 is reduced to what the live API already provides (see the status table). M5 scope is as in the Master Plan §8.
+## M4 — Mobility Analytics (done, reduced, 2026-11-17)
+Reduced by Amendment 1: only figures that need no stored history.
+- [x] Active vehicle and alert statistics (already in `/api/v1/overview` since M2.4)
+- [x] Reported delay summaries: median, 90th percentile, early / within band / late (since M2.4)
+- [x] New `/api/v1/analytics/now`: routes with the most late running trips (counts, worst delay) and active alerts by effect, by cause and by most-named route
+- [x] Shown on the overview as "Where the delays are now" and "Active alerts by effect", each linking to the route
+- [x] Metric definition "Late trips by route" published under `/api/v1/meta/metrics` and on the About page
+- [ ] ~~Historical trends, daily route statistics~~ — out of the first release: they need stored history
+
+**Acceptance (Master Plan §8, M4):** each metric has a documented definition; all are computed from live TransLink data; nothing historical is shown, so nothing incomplete is presented as a trend. Tests: 7 backend tests for the endpoint, 4 frontend tests for the view.
+
+## M5 — Production Readiness (done, 2026-11-17)
+- [x] Security headers on every response: content security policy (this site plus the map tiles only), no-sniff, referrer policy, HSTS, permissions policy; tested
+- [x] Caching: hashed web-app files cached for a year, the page itself revalidated; tested
+- [x] Dependency audit: `npm audit` and `pip-audit` found no known vulnerabilities (2026-11-17); repeated weekly by the `Dependency audit` workflow
+- [x] Frontend linter (ESLint with TypeScript, React hooks and strict accessibility rules) in CI; it found one real bug (a ref written during render in the map), fixed
+- [x] Accessibility audit with axe-core in a real browser, every screen, light and dark themes, desktop and phone width. Found and fixed: delay text below 4.5:1 contrast in the light theme, a skipped heading level on the alerts page, a scrollable table unreachable by keyboard at phone width, and a flash of the wrong theme on reload. After the fixes: no violations. Structural axe checks now run in CI on every screen
+- [x] Smoke check `python -m brispulse.smoke URL`, run daily against the live site by the `Smoke check (live site)` workflow
+- [x] Operations notes in `DEPLOY.md`
+
+**Acceptance (Master Plan §8, M5):** production build succeeds; critical tests pass (backend 407, frontend 38); deployment verified; environment variables documented (none required); external data failures handled; known limitations documented.
+
+**Known limits:**
+- No end-to-end browser test in CI. The map is checked by hand and by the smoke check's data checks, not by an automated browser.
+- No rate limiting (Architecture W10).
+- The daily smoke check means an outage can go unnoticed for up to a day.
+- Colour contrast is checked in a real browser, not in CI (jsdom has no layout).
 
 ## Open owner actions
-- **Email TransLink** (`translink.opendata@tmr.qld.gov.au`) before the dashboard is publicised: the open-data terms require contact details and attribution wording. The live site is already public.
-- **Portfolio page**: point the BrisPulse entry on the resume site at https://brispulse.onrender.com and update its description, which still describes the earlier concept.
-- **GitHub commit email**: the merge commit `9925d34` (UQ address) is still reachable by its hash; GitHub Support can remove it if that matters to you.
-- **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
-- Revisit the metric thresholds after the first week of collected data (A3).
-- **Rate limiting** (Architecture W10): not built into the application. Responses are served from memory in milliseconds and carry cache headers; a per-IP limit belongs at the host's proxy, so it is decided together with hosting (A5).
-- Update the portfolio page, which still describes the earlier event-day concept.
+- **TransLink's reply** to the approval request sent on 2026-11-17. If they ask for different attribution wording or conditions, the text is in `backend/brispulse/api/views.py` and on the About page.
+- **Merge `m4-m5-finish` into `main`** to deploy M4 and M5: Render redeploys every commit to `main`.
+- **iCloud copies**: files such as `frontend/src/App 2.tsx` and `backend/uv 2.lock` are duplicates created by iCloud Drive. They are now ignored by git and can be deleted.
+- **GitHub commit email**: the merge commit `9925d34` (UQ address) is still reachable by its hash; left as is by the owner's decision of 2026-11-17.

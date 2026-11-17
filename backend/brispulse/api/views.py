@@ -13,16 +13,21 @@ from typing import Any
 from brispulse.api.context import Context
 from brispulse.api.schemas import (
     ActivePeriodOut,
+    AlertAnalytics,
     AlertOut,
     AlertOverview,
+    AnalyticsNow,
     CoverageCounts,
     CoverageOut,
+    DelayAnalytics,
     DelaySummaryOut,
     FeedStatus,
     MetricDefinition,
     MetricsData,
     OverviewData,
+    RouteAlertCount,
     RouteDetail,
+    RouteLateness,
     RouteRef,
     RouteSummary,
     StaticStatus,
@@ -527,6 +532,76 @@ def trip_detail(context: Context, reference: Reference, trip_id: str) -> View[Tr
     return View(data, (VP, TU), notes)
 
 
+# --- analytics (M4, live-only) ----------------------------------------------------
+
+# How many routes each ranked list shows.
+ANALYTICS_TOP = 10
+
+
+def analytics_now(context: Context, reference: Reference) -> View[AnalyticsNow]:
+    """Where the delays and the disruptions are right now (Architecture §19.2, M4 reduced).
+
+    Everything here is computed from the live snapshot. Nothing needs stored history, so
+    nothing here describes a trend.
+    """
+    thresholds = context.thresholds
+    running = context.running
+    delays = None
+    if running is not None:
+        per_route: dict[str, list[int]] = {}
+        counted = 0
+        for item in running:
+            delay = item.trip.next_stop_delay_s
+            if item.trip.route_id is None or delay is None or item.trip.delay_implausible:
+                continue
+            per_route.setdefault(item.trip.route_id, []).append(delay)
+            counted += 1
+        rows = [
+            RouteLateness(
+                route=_route_ref(reference, route_id),
+                running=len(values),
+                late=sum(1 for d in values if d > thresholds.delay_late_s),
+                early=sum(1 for d in values if d < -thresholds.delay_early_s),
+                worst_delay_s=max(values),
+            )
+            for route_id, values in per_route.items()
+        ]
+        late_rows = [row for row in rows if row.late > 0]
+        late_rows.sort(key=lambda row: (-row.late, -row.worst_delay_s, row.route.route_id))
+        delays = DelayAnalytics(
+            trips_counted=counted,
+            routes_with_running_trips=len(rows),
+            routes_with_late_trips=len(late_rows),
+            late_routes=late_rows[:ANALYTICS_TOP],
+        )
+
+    alerts_snapshot = context.usable(ALERTS)
+    alert_figures = None
+    if alerts_snapshot is not None:
+        active = [a for a in alerts_snapshot.items if a.is_active(context.now)]
+        route_counts = Counter(route_id for a in active for route_id in a.route_ids)
+        ranked = sorted(route_counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        alert_figures = AlertAnalytics(
+            active=len(active),
+            by_effect=dict(Counter(a.effect for a in active).most_common()),
+            by_cause=dict(Counter(a.cause for a in active).most_common()),
+            routes_most_affected=[
+                RouteAlertCount(route=_route_ref(reference, route_id), active_alerts=count)
+                for route_id, count in ranked[:ANALYTICS_TOP]
+            ],
+        )
+
+    notes = _notes(context, VP, TU, ALERTS)
+    if delays is not None:
+        notes.append(
+            "Late means a predicted delay of more than "
+            f"{thresholds.delay_late_s // 60} minutes at the next stop. Counts are for this "
+            "moment only; this deployment keeps no history."
+        )
+    data = AnalyticsNow(delays=delays, alerts=alert_figures)
+    return View(data, (VP, TU, ALERTS), notes)
+
+
 # --- metric definitions -----------------------------------------------------------
 
 
@@ -575,6 +650,19 @@ def metric_definitions(context: Context) -> MetricsData:
                     "A prediction made mid-trip, not an observed arrival. It is not "
                     "on-time performance and is not comparable to TransLink's published "
                     "punctuality figures. The band limits are BrisPulse's own."
+                ),
+            ),
+            MetricDefinition(
+                name="Late trips by route",
+                definition=(
+                    "For each route, the number of running trips predicted to be more than "
+                    f"{t.delay_late_s} s late at their next stop, and the largest such delay. "
+                    "Routes are ranked by that count."
+                ),
+                source=f"{source}: TripUpdates and VehiclePositions",
+                limitations=(
+                    "A count for one moment, not a rate or a trend. Most routes have only a "
+                    "few trips running at once, so a route's count can change quickly."
                 ),
             ),
             MetricDefinition(

@@ -1,0 +1,43 @@
+name: Dependency audit
+
+# Weekly, and on demand. Kept out of the per-commit CI so that a newly published
+# advisory about a dependency does not block unrelated changes; a failure here is a
+# prompt to update that dependency.
+on:
+  schedule:
+    - cron: "17 21 * * 0" # Mondays 07:17 Brisbane time
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python dependencies
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.8"
+      - name: Audit locked runtime dependencies
+        run: |
+          uv export --frozen --no-dev --no-emit-project -o requirements.txt
+          uv tool run pip-audit -r requirements.txt --disable-pip --require-hashes
+
+  node:
+    name: Node dependencies
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Audit locked dependencies
+        run: npm audit

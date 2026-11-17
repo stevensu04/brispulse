@@ -20,6 +20,7 @@ from brispulse.api.router import router as api_router
 from brispulse.config import Settings, get_settings
 from brispulse.logging_setup import configure_logging
 from brispulse.runtime import running_service
+from brispulse.security import SecurityHeadersMiddleware
 
 DESCRIPTION = """
 Read-only API for BrisPulse: live public transport conditions in South East Queensland.
@@ -55,6 +56,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # The vehicle list was 695 kB of JSON in the evening peak and 98 kB compressed
     # (measured 2026-11-16).
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    # Added last, so it wraps everything, error responses included.
+    app.add_middleware(SecurityHeadersMiddleware)
     install_error_handlers(app)
     app.include_router(api_router)
 

@@ -191,7 +191,7 @@ export function RouteDetail({ routeId }: { routeId: string }) {
               ) : detail.alerts.length === 0 ? (
                 <p className="secondary">No alerts for this route.</p>
               ) : (
-                detail.alerts.map((alert) => <AlertCard key={alert.alert_id} alert={alert} />)
+                detail.alerts.map((alert) => <AlertCard key={alert.alert_id} alert={alert} headingLevel={3} />)
               )}
             </section>
           </>

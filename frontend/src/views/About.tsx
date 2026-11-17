@@ -2,6 +2,7 @@ import { useMetrics, useStatus } from "../api/hooks";
 import { FreshnessBadge } from "../components/Freshness";
 import { QueryView } from "../components/States";
 import { formatClock, formatDuration, sentenceCase } from "../lib/format";
+import { TableScroll } from "../components/TableScroll";
 
 export function About() {
   const metrics = useMetrics();
@@ -35,7 +36,7 @@ export function About() {
           <h2 className="card-title" id="feeds">
             Data feeds right now
           </h2>
-          <div className="table-wrap">
+          <TableScroll label="Data feeds right now">
             <table>
               <thead>
                 <tr>
@@ -62,7 +63,7 @@ export function About() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
           {schedule ? (
             <p className="small secondary" style={{ marginTop: 8 }}>
               Timetable in use: {schedule.routes} routes, {schedule.stops.toLocaleString("en-AU")} stops,{" "}
