@@ -7,6 +7,7 @@ import { Notes, QueryView } from "../components/States";
 import { type BandLimits, MODE_ORDER, formatCount, formatDelay } from "../lib/format";
 import { href } from "../lib/router";
 import { useBandLimits } from "../lib/useBandLimits";
+import { Insights } from "./Insights";
 
 /** A headline number. When the value cannot be given it says so; it never shows 0. */
 function Tile({ label, value, detail }: { label: string; value: string | null; detail?: string }) {
@@ -142,6 +143,8 @@ export function Overview() {
               ) : null}
 
               <ByMode data={data} limits={limits} />
+
+              <Insights />
 
               <Notes
                 tone="info"

@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/analytics/now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Analytics Now
+         * @description Where the delays and disruptions are right now: late trips by route, alerts by effect.
+         */
+        get: operations["get_analytics_now_api_v1_analytics_now_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meta/metrics": {
         parameters: {
             query?: never;
@@ -175,6 +195,21 @@ export interface components {
             /** Start */
             start: string | null;
         };
+        /** AlertAnalytics */
+        AlertAnalytics: {
+            /** Active */
+            active: number;
+            /** By Cause */
+            by_cause: {
+                [key: string]: number;
+            };
+            /** By Effect */
+            by_effect: {
+                [key: string]: number;
+            };
+            /** Routes Most Affected */
+            routes_most_affected: components["schemas"]["RouteAlertCount"][];
+        };
         /** AlertOut */
         AlertOut: {
             /** Active */
@@ -212,6 +247,14 @@ export interface components {
             in_feed: number;
         };
         /**
+         * AnalyticsNow
+         * @description Descriptive figures for the present moment. This deployment keeps no history.
+         */
+        AnalyticsNow: {
+            alerts: components["schemas"]["AlertAnalytics"] | null;
+            delays: components["schemas"]["DelayAnalytics"] | null;
+        };
+        /**
          * CoverageCounts
          * @description Of the trips the schedule says are in progress, how many have live data.
          */
@@ -241,6 +284,17 @@ export interface components {
             /** Trips With Vehicle */
             trips_with_vehicle: number | null;
         };
+        /** DelayAnalytics */
+        DelayAnalytics: {
+            /** Late Routes */
+            late_routes: components["schemas"]["RouteLateness"][];
+            /** Routes With Late Trips */
+            routes_with_late_trips: number;
+            /** Routes With Running Trips */
+            routes_with_running_trips: number;
+            /** Trips Counted */
+            trips_counted: number;
+        };
         /**
          * DelaySummaryOut
          * @description Predicted delay at the next stop, across running trips. Not on-time performance.
@@ -262,6 +316,11 @@ export interface components {
             within_band: number;
             /** Without Delay */
             without_delay: number;
+        };
+        /** Envelope[AnalyticsNow] */
+        Envelope_AnalyticsNow_: {
+            data: components["schemas"]["AnalyticsNow"] | null;
+            meta: components["schemas"]["Meta"];
         };
         /** Envelope[MetricsData] */
         Envelope_MetricsData_: {
@@ -424,6 +483,12 @@ export interface components {
             trips: components["schemas"]["TripOverview"] | null;
             vehicles: components["schemas"]["VehicleOverview"] | null;
         };
+        /** RouteAlertCount */
+        RouteAlertCount: {
+            /** Active Alerts */
+            active_alerts: number;
+            route: components["schemas"]["RouteRef"];
+        };
         /** RouteDetail */
         RouteDetail: {
             /** Alerts */
@@ -433,6 +498,21 @@ export interface components {
             running_trips: components["schemas"]["TripBrief"][] | null;
             /** Vehicles */
             vehicles: components["schemas"]["VehicleOut"][] | null;
+        };
+        /**
+         * RouteLateness
+         * @description One route's running trips right now, by predicted delay at the next stop.
+         */
+        RouteLateness: {
+            /** Early */
+            early: number;
+            /** Late */
+            late: number;
+            route: components["schemas"]["RouteRef"];
+            /** Running */
+            running: number;
+            /** Worst Delay S */
+            worst_delay_s: number;
         };
         /** RouteRef */
         RouteRef: {
@@ -690,6 +770,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description The service is not ready yet. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_analytics_now_api_v1_analytics_now_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_AnalyticsNow_"];
                 };
             };
             /** @description The service is not ready yet. */

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from brispulse.api.schemas import (
     AlertOut,
+    AnalyticsNow,
     Envelope,
     ErrorResponse,
     MetricsData,
@@ -37,6 +38,7 @@ ENDPOINTS: list[tuple[str, Any]] = [
     ("/api/v1/routes/R1", Envelope[RouteDetail]),
     ("/api/v1/trips/T1", Envelope[TripDetail]),
     ("/api/v1/alerts", Envelope[list[AlertOut]]),
+    ("/api/v1/analytics/now", Envelope[AnalyticsNow]),
     ("/api/v1/meta/metrics", Envelope[MetricsData]),
 ]
 
@@ -141,6 +143,7 @@ def test_without_a_schedule_only_status_and_definitions_answer() -> None:
         "/api/v1/routes/R1": 503,
         "/api/v1/trips/T1": 503,
         "/api/v1/alerts": 503,
+        "/api/v1/analytics/now": 503,
     }
     assert service.get("/api/v1/vehicles").json()["error"]["code"] == "schedule_not_loaded"
     status = service.get("/api/v1/status").json()
@@ -178,6 +181,7 @@ def test_feeds_listed_in_meta_are_the_ones_the_endpoint_uses() -> None:
         "/api/v1/routes/R1": everything,
         "/api/v1/trips/T1": ["trip_updates", "vehicle_positions"],
         "/api/v1/alerts": ["alerts"],
+        "/api/v1/analytics/now": everything,
         "/api/v1/meta/metrics": [],
     }
     # Published defaults, so a client and this suite agree on what was loaded.

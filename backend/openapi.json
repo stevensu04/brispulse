@@ -35,6 +35,43 @@
     "title": "ActivePeriodOut",
     "type": "object"
    },
+   "AlertAnalytics": {
+    "properties": {
+     "active": {
+      "title": "Active",
+      "type": "integer"
+     },
+     "by_cause": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "By Cause",
+      "type": "object"
+     },
+     "by_effect": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "By Effect",
+      "type": "object"
+     },
+     "routes_most_affected": {
+      "items": {
+       "$ref": "#/components/schemas/RouteAlertCount"
+      },
+      "title": "Routes Most Affected",
+      "type": "array"
+     }
+    },
+    "required": [
+     "active",
+     "by_effect",
+     "by_cause",
+     "routes_most_affected"
+    ],
+    "title": "AlertAnalytics",
+    "type": "object"
+   },
    "AlertOut": {
     "properties": {
      "active": {
@@ -156,6 +193,37 @@
     "title": "AlertOverview",
     "type": "object"
    },
+   "AnalyticsNow": {
+    "description": "Descriptive figures for the present moment. This deployment keeps no history.",
+    "properties": {
+     "alerts": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/AlertAnalytics"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "delays": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/DelayAnalytics"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "delays",
+     "alerts"
+    ],
+    "title": "AnalyticsNow",
+    "type": "object"
+   },
    "CoverageCounts": {
     "description": "Of the trips the schedule says are in progress, how many have live data.",
     "properties": {
@@ -245,6 +313,37 @@
     "title": "CoverageOut",
     "type": "object"
    },
+   "DelayAnalytics": {
+    "properties": {
+     "late_routes": {
+      "items": {
+       "$ref": "#/components/schemas/RouteLateness"
+      },
+      "title": "Late Routes",
+      "type": "array"
+     },
+     "routes_with_late_trips": {
+      "title": "Routes With Late Trips",
+      "type": "integer"
+     },
+     "routes_with_running_trips": {
+      "title": "Routes With Running Trips",
+      "type": "integer"
+     },
+     "trips_counted": {
+      "title": "Trips Counted",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "trips_counted",
+     "routes_with_running_trips",
+     "routes_with_late_trips",
+     "late_routes"
+    ],
+    "title": "DelayAnalytics",
+    "type": "object"
+   },
    "DelaySummaryOut": {
     "description": "Predicted delay at the next stop, across running trips. Not on-time performance.",
     "properties": {
@@ -306,6 +405,29 @@
      "late"
     ],
     "title": "DelaySummaryOut",
+    "type": "object"
+   },
+   "Envelope_AnalyticsNow_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/AnalyticsNow"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[AnalyticsNow]",
     "type": "object"
    },
    "Envelope_MetricsData_": {
@@ -936,6 +1058,23 @@
     "title": "OverviewData",
     "type": "object"
    },
+   "RouteAlertCount": {
+    "properties": {
+     "active_alerts": {
+      "title": "Active Alerts",
+      "type": "integer"
+     },
+     "route": {
+      "$ref": "#/components/schemas/RouteRef"
+     }
+    },
+    "required": [
+     "route",
+     "active_alerts"
+    ],
+    "title": "RouteAlertCount",
+    "type": "object"
+   },
    "RouteDetail": {
     "properties": {
      "alerts": {
@@ -991,6 +1130,39 @@
      "alerts"
     ],
     "title": "RouteDetail",
+    "type": "object"
+   },
+   "RouteLateness": {
+    "description": "One route's running trips right now, by predicted delay at the next stop.",
+    "properties": {
+     "early": {
+      "title": "Early",
+      "type": "integer"
+     },
+     "late": {
+      "title": "Late",
+      "type": "integer"
+     },
+     "route": {
+      "$ref": "#/components/schemas/RouteRef"
+     },
+     "running": {
+      "title": "Running",
+      "type": "integer"
+     },
+     "worst_delay_s": {
+      "title": "Worst Delay S",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "route",
+     "running",
+     "late",
+     "early",
+     "worst_delay_s"
+    ],
+    "title": "RouteLateness",
     "type": "object"
    },
    "RouteRef": {
@@ -1984,6 +2156,35 @@
      }
     },
     "summary": "Get Alerts"
+   }
+  },
+  "/api/v1/analytics/now": {
+   "get": {
+    "description": "Where the delays and disruptions are right now: late trips by route, alerts by effect.",
+    "operationId": "get_analytics_now_api_v1_analytics_now_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_AnalyticsNow_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Analytics Now"
    }
   },
   "/api/v1/meta/metrics": {

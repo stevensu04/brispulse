@@ -3,6 +3,7 @@ import {
   ApiError,
   getEnvelope,
   type Alert,
+  type AnalyticsNow,
   type Envelope,
   type MetricsData,
   type OverviewData,
@@ -43,4 +44,5 @@ export const useRoute = (routeId: string) =>
 export const useTrip = (tripId: string | null) =>
   useEnvelope<TripDetail>(`/trips/${encodeURIComponent(tripId ?? "")}`, LIVE_MS, tripId !== null);
 export const useAlerts = () => useEnvelope<Alert[]>("/alerts", SLOW_MS);
+export const useAnalytics = () => useEnvelope<AnalyticsNow>("/analytics/now", LIVE_MS * 2);
 export const useMetrics = () => useEnvelope<MetricsData>("/meta/metrics", SLOW_MS * 10);

@@ -265,6 +265,50 @@ class TripDetail(BaseModel):
     realtime: TripRealtime | None
 
 
+# --- analytics (M4, live-only) ----------------------------------------------------
+
+
+class RouteLateness(BaseModel):
+    """One route's running trips right now, by predicted delay at the next stop."""
+
+    route: RouteRef
+    running: int
+    late: int
+    early: int
+    # The largest plausible predicted delay among the route's running trips.
+    worst_delay_s: int
+
+
+class RouteAlertCount(BaseModel):
+    route: RouteRef
+    active_alerts: int
+
+
+class DelayAnalytics(BaseModel):
+    # Running trips whose delay counted (plausible, present).
+    trips_counted: int
+    routes_with_running_trips: int
+    routes_with_late_trips: int
+    # The routes with the most late trips right now, most first. Counts, not
+    # percentages: most routes have only a few trips running at any moment.
+    late_routes: list[RouteLateness]
+
+
+class AlertAnalytics(BaseModel):
+    active: int
+    by_effect: dict[str, int]
+    by_cause: dict[str, int]
+    # The routes named by the most active alerts, most first.
+    routes_most_affected: list[RouteAlertCount]
+
+
+class AnalyticsNow(BaseModel):
+    """Descriptive figures for the present moment. This deployment keeps no history."""
+
+    delays: DelayAnalytics | None
+    alerts: AlertAnalytics | None
+
+
 # --- metric definitions -----------------------------------------------------------
 
 

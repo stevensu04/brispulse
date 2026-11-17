@@ -417,6 +417,7 @@ class TestMetricDefinitions:
             "Fresh vehicles",
             "Running trips",
             "Predicted delay",
+            "Late trips by route",
             "Real-time coverage",
             "Active alerts",
         ]
