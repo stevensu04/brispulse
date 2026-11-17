@@ -2,7 +2,7 @@
 
 The single record of actual progress. The product vision lives in the [Master Plan](BRISPULSE-MASTER-PLAN.md); the technical design in the [Architecture](BRISPULSE-ARCHITECTURE.md); notable changes in the [Changelog](BRISPULSE-CHANGELOG.md). Any model or developer working on BrisPulse updates **this** file rather than keeping a separate roadmap.
 
-**Last updated:** 2026-11-16
+**Last updated:** 2026-11-17
 
 ## Status at a glance
 
@@ -10,8 +10,8 @@ The single record of actual progress. The product vision lives in the [Master Pl
 | --- | --- | --- |
 | M0 Technical Discovery | **Done** (2026-11-16) | Five discovery documents and probe scripts |
 | M1 Architecture Validation | **Done** (approved 2026-11-16) | [Architecture](BRISPULSE-ARCHITECTURE.md) §13 records the decisions; hosting (A5) and TransLink contact (A6) remain open |
-| M2 Data Pipeline and Backend | **In progress** — M2.1 to M2.5 and the live-only mode done on branch `m2-data-pipeline` | M2.6 is now "deploy live-only on a free host"; the free host is still to be chosen |
-| M3 Mobility Monitoring Dashboard | **Done locally** (2026-11-17) on branch `m2-data-pipeline` | Overview, live map, routes, trips, alerts, about. Not deployed; see the limits listed under M3 |
+| M2 Data Pipeline and Backend | **Done for the first release** — M2.1 to M2.6 done; merged to `main` 2026-11-17 | Deployed at https://brispulse.onrender.com. Remaining: measure the real wake-up time after an idle spell |
+| M3 Mobility Monitoring Dashboard | **Done and deployed** (2026-11-17) | Overview, live map, routes, trips, alerts, about. See the limits listed under M3 |
 | M4 Mobility Analytics | **Reduced** by the owner's decision of 2026-11-16 | Live figures (already in the API) stay. Trends and daily route statistics are out of the first release: they need stored history |
 | M5 Production Readiness and Deployment | Not started | |
 
@@ -43,7 +43,8 @@ The single record of actual progress. The product vision lives in the [Master Pl
 - [x] M2.4 Live API (2026-11-16): `status`, `overview`, `vehicles`, `routes`, `trips`, `alerts`, `meta/metrics`. Contract tests against the published schemas in four data conditions; "null, never zero" proven by tests; checked against live TransLink data
 - [x] M2.5 Aggregator and history tables (2026-11-16): `trip_record`, `network_sample`, `alert_record`, `route_day_stats`; hourly rollup of closed service days and retention; real-time coverage in `/api/v1/overview`. Verified on live data, including a stop-and-restart
 - [x] Live-only mode (2026-11-16): the service runs with no database, reading the schedule straight from TransLink. Verified live: HTTP in 1.6 s, schedule in 10.9 s, all feeds live 12.4 s after start; about 150 MB of memory. The Docker image also ran within a 256 MB memory limit (106 MiB used)
-- [ ] M2.6 Deploy live-only on Render's free web service. **Host chosen (2026-11-17); config ready (`render.yaml`, `DEPLOY.md`); waiting on the owner's Render account and on merging the branch to `main`.** Then measure the real wake-up time
+- [x] M2.6 Deployed live-only on Render's free web service (2026-11-17): https://brispulse.onrender.com, from `main` commit `bcd9943`. Health check, status and map checked on the live site
+- [ ] Measure the real wake-up time on Render after the service has been idle for 15 minutes
 - [ ] ~~24-hour live run, one-week data review, database backups~~ — not applicable to a live-only release (Architecture §19.5)
 
 ### Measurements from M2.2 (one run, local machine)
@@ -76,7 +77,7 @@ The five-minute tick was shortened to one minute for this test, to see several c
 - Storage after 13 minutes: `trip_record` 496 kB for 746 rows (about 0.66 kB per row while raw observations are attached). At roughly 20,000 trips a day that is on the order of 10 MB a day, and about 350 MB for 35 days. **This is an extrapolation from 13 minutes and needs a real day to confirm**; if it holds, shorten the 35-day retention on a small database.
 - Service memory: about 100 MB.
 
-## M3 — Mobility Monitoring Dashboard (done locally, 2026-11-17)
+## M3 — Mobility Monitoring Dashboard (done and deployed, 2026-11-17)
 - [x] React + TypeScript web app in `frontend/`, served by the backend container
 - [x] Overview: vehicles reporting, running trips, median predicted delay, active alerts, delay bands, by-mode table
 - [x] Live map of vehicle positions, coloured by delay band, with mode filter and a detail panel showing the trip's next stops
@@ -102,7 +103,9 @@ The five-minute tick was shortened to one minute for this test, to see several c
 M4 is reduced to what the live API already provides (see the status table). M5 scope is as in the Master Plan §8.
 
 ## Open owner actions
-- **Create a Render account and connect the repository** (steps in `DEPLOY.md`), and approve merging `m2-data-pipeline` into `main`: Render deploys from `main`. Only you can create the account.
+- **Email TransLink** (`translink.opendata@tmr.qld.gov.au`) before the dashboard is publicised: the open-data terms require contact details and attribution wording. The live site is already public.
+- **Portfolio page**: point the BrisPulse entry on the resume site at https://brispulse.onrender.com and update its description, which still describes the earlier concept.
+- **GitHub commit email**: the merge commit `9925d34` (UQ address) is still reachable by its hash; GitHub Support can remove it if that matters to you.
 - **A6 — Email `translink.opendata@tmr.qld.gov.au`** to supply contact details and confirm attribution wording. Required by the open-data terms before public launch.
 - Revisit the metric thresholds after the first week of collected data (A3).
 - **Rate limiting** (Architecture W10): not built into the application. Responses are served from memory in milliseconds and carry cache headers; a per-IP limit belongs at the host's proxy, so it is decided together with hosting (A5).

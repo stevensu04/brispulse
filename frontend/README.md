@@ -1,6 +1,6 @@
 # BrisPulse web app
 
-The dashboard: React and TypeScript, built with Vite. It reads only the BrisPulse API
+The dashboard, live at https://brispulse.onrender.com: React and TypeScript, built with Vite. It reads only the BrisPulse API
 (`/api/v1`) and holds no data of its own.
 
 ## Run it

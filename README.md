@@ -2,7 +2,7 @@
 
 A Brisbane mobility intelligence platform built on TransLink's open public transport data.
 
-> **Status: working locally, not yet deployed.** The backend collects TransLink's live feeds, validates them and serves them through a JSON API; the web app shows an overview, a live map, routes, trips and alerts. Both are tested and run together as one container. There is no public deployment yet. The first release is **live-only**: it keeps no history, so it shows what is happening now and nothing about the past. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
+> **Status: deployed as a live-only first release** at **https://brispulse.onrender.com** (Render free web service; see [DEPLOY.md](DEPLOY.md)). The backend collects TransLink's live feeds, validates them and serves them through a JSON API; the web app shows an overview, a live map, routes, trips and alerts. It keeps no history, so it shows what is happening now and nothing about the past. The free host sleeps when idle: the first visit after a quiet spell can take one to two minutes. Progress is tracked in the [Implementation Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md).
 
 ## What it aims to do
 

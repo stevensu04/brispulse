@@ -4,6 +4,8 @@ The first release is **live-only**: one container holding the API, the collector
 web app, with no database ([Architecture §19](BRISPULSE-ARCHITECTURE.md)). It is set up
 to run on [Render](https://render.com)'s free web service.
 
+**Live at https://brispulse.onrender.com** (deployed 2026-11-17 from `main`, commit `bcd9943`).
+
 ## What to expect from the free tier
 
 Render's free web service has 0.1 CPU and 512 MB of memory and **spins down after 15
@@ -21,17 +23,16 @@ visitor arriving after a quiet spell should expect to wait one to two minutes.**
 app shows a "Waking up" screen meanwhile. These are local measurements with a CPU cap,
 not measurements on Render itself; check them after the first deploy.
 
-## One-time setup (needs your own Render account)
+## Setup (done once)
 
-An account, and the link between Render and your GitHub, can only be created by you.
+The Render account and the GitHub link were created by the owner. The service was then created from the Blueprint:
 
-1. Create an account at <https://render.com> (sign in with GitHub).
-2. **New → Blueprint**, choose the `stevensu04/brispulse` repository, branch `main`.
-   Render reads [`render.yaml`](render.yaml) and proposes one service named `brispulse`.
-3. Approve it. The first build takes a few minutes.
-4. Open the address Render gives you (`https://brispulse-….onrender.com`).
+1. **New → Blueprint** on Render, repository `stevensu04/brispulse`, branch `main`.
+   Render reads [`render.yaml`](render.yaml) and creates one service named `brispulse`.
+2. Blueprint name `brispulse`; path `render.yaml`.
+3. The first build took about a minute and a quarter.
 
-No environment variables or secrets are needed.
+No environment variables or secrets are needed. Render's Blueprint page shows "Hobby" as the workspace plan; the service itself is on the Free instance type.
 
 ## Checking a deployment
 
@@ -39,6 +40,8 @@ No environment variables or secrets are needed.
 - `/api/v1/status` shows each feed's state. All three should read `live` within about a
   minute of a cold start.
 - `/` is the dashboard.
+
+Checked after the first deploy: `/healthz` returned `{"status":"ok"}`, `/api/v1/status` reported all three feeds `live`, and the map showed about 995 vehicles.
 
 ## Updating
 
