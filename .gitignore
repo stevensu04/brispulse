@@ -27,3 +27,8 @@ frontend/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Copies made by iCloud Drive when a file changes on two devices ("App 2.tsx").
+# They are never project files; this keeps them out of commits.
+* [2-9].*
+* [2-9]

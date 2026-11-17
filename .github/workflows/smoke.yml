@@ -1,0 +1,31 @@
+name: Smoke check (live site)
+
+# Once a day, and on demand: checks the deployed site from the outside. A failed
+# scheduled run is how a broken deployment gets noticed: GitHub emails the person who
+# last changed this schedule. Each run wakes the free host once, which costs a few
+# minutes of its monthly instance hours.
+on:
+  schedule:
+    - cron: "0 22 * * *" # 08:00 Brisbane time
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: brispulse.onrender.com
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.8"
+      - name: Install
+        run: uv sync --frozen --no-dev
+      - name: Check the live site
+        # Generous: a sleeping free host can take a minute or more to answer.
+        run: uv run python -m brispulse.smoke https://brispulse.onrender.com --timeout 300
