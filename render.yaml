@@ -1,0 +1,21 @@
+# Render Blueprint: deploys BrisPulse as one free Docker web service.
+# Setup steps are in DEPLOY.md. Nothing here is a secret.
+services:
+  - type: web
+    name: brispulse
+    runtime: docker
+    plan: free
+    # Singapore is the nearest region Render offers to Brisbane. It cannot be changed
+    # after the service is created.
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: main
+    # Liveness only: answers as soon as the process is up, whether or not TransLink's
+    # data has loaded yet.
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      # Leaving the database unset is what makes this the live-only release.
+      - key: BRISPULSE_LOG_LEVEL
+        value: INFO

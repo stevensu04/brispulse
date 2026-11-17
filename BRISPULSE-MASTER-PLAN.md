@@ -7,6 +7,20 @@
 **Initial Release:** Functional MVP
 **Primary Market:** Brisbane, Queensland, Australia
 
+> **Amendment 1 — 16 November 2026 (product owner's decision).**
+> The first release is a **live-only dashboard** that runs on free hosting. Stored
+> history is out of the first release, and with it everything in this plan that depends
+> on it: historical trends, daily route statistics, real-time coverage over time, and
+> alert history (parts of §2.1 item 6, §2.3 "Intelligence", §3.1 B, §5.1 "Historical
+> Mobility Trends", M4, and the matching lines of §9 and §14).
+> **Reason:** history needs a server that runs all day, which costs about US$5-8 a
+> month; the owner chose not to pay for hosting.
+> **Unchanged:** real data only, the live monitoring features, data freshness and
+> honesty rules, testing and deployment standards.
+> The history code exists, is tested and is switched off; configuring a database turns
+> it back on. Details: [Architecture](BRISPULSE-ARCHITECTURE.md) §19 and the
+> [Roadmap](BRISPULSE-IMPLEMENTATION-ROADMAP.md). The text below is the original plan.
+
 ---
 
 ## 1. Executive Summary

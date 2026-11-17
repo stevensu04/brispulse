@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brispulse"
+version = "0.1.0"
+description = "Brisbane mobility intelligence built on TransLink open data"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.13",
+    "fastapi>=0.115",
+    "gtfs-realtime-bindings>=3.0.0",
+    "httpx2>=2.16.0",
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "sqlalchemy>=2.0.30",
+    "tzdata>=2026.6",
+    "uvicorn>=0.30",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.11",
+    "pytest>=8.2",
+    "ruff>=0.6",
+    "types-protobuf>=7.35.1.20260906",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["brispulse"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Import the package from this directory rather than through the editable install:
+# macOS ignores editable-install .pth files inside cloud-synced folders.
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+# A deprecation in a dependency should fail the build, not scroll past.
+filterwarnings = ["error"]
+markers = [
+    "db: needs a PostgreSQL database (see tests/conftest.py)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["brispulse", "tests"]

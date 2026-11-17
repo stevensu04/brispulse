@@ -1,0 +1,2347 @@
+{
+ "components": {
+  "schemas": {
+   "ActivePeriodOut": {
+    "properties": {
+     "end": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "End"
+     },
+     "start": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Start"
+     }
+    },
+    "required": [
+     "start",
+     "end"
+    ],
+    "title": "ActivePeriodOut",
+    "type": "object"
+   },
+   "AlertOut": {
+    "properties": {
+     "active": {
+      "title": "Active",
+      "type": "boolean"
+     },
+     "active_periods": {
+      "items": {
+       "$ref": "#/components/schemas/ActivePeriodOut"
+      },
+      "title": "Active Periods",
+      "type": "array"
+     },
+     "alert_id": {
+      "title": "Alert Id",
+      "type": "string"
+     },
+     "cause": {
+      "title": "Cause",
+      "type": "string"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "effect": {
+      "title": "Effect",
+      "type": "string"
+     },
+     "header": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Header"
+     },
+     "planned_works": {
+      "title": "Planned Works",
+      "type": "boolean"
+     },
+     "routes": {
+      "items": {
+       "$ref": "#/components/schemas/RouteRef"
+      },
+      "title": "Routes",
+      "type": "array"
+     },
+     "stops": {
+      "items": {
+       "$ref": "#/components/schemas/StopRef"
+      },
+      "title": "Stops",
+      "type": "array"
+     },
+     "url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Url"
+     }
+    },
+    "required": [
+     "alert_id",
+     "cause",
+     "effect",
+     "planned_works",
+     "active",
+     "header",
+     "description",
+     "url",
+     "active_periods",
+     "routes",
+     "stops"
+    ],
+    "title": "AlertOut",
+    "type": "object"
+   },
+   "AlertOverview": {
+    "properties": {
+     "active": {
+      "title": "Active",
+      "type": "integer"
+     },
+     "active_other": {
+      "title": "Active Other",
+      "type": "integer"
+     },
+     "active_planned_works": {
+      "title": "Active Planned Works",
+      "type": "integer"
+     },
+     "in_feed": {
+      "title": "In Feed",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "in_feed",
+     "active",
+     "active_planned_works",
+     "active_other"
+    ],
+    "title": "AlertOverview",
+    "type": "object"
+   },
+   "CoverageCounts": {
+    "description": "Of the trips the schedule says are in progress, how many have live data.",
+    "properties": {
+     "trips_scheduled": {
+      "title": "Trips Scheduled",
+      "type": "integer"
+     },
+     "trips_with_update": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trips With Update"
+     },
+     "trips_with_vehicle": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trips With Vehicle"
+     }
+    },
+    "required": [
+     "trips_scheduled",
+     "trips_with_update",
+     "trips_with_vehicle"
+    ],
+    "title": "CoverageCounts",
+    "type": "object"
+   },
+   "CoverageOut": {
+    "properties": {
+     "by_mode": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/CoverageCounts"
+      },
+      "title": "By Mode",
+      "type": "object"
+     },
+     "sampled_at": {
+      "format": "date-time",
+      "title": "Sampled At",
+      "type": "string"
+     },
+     "trips_scheduled": {
+      "title": "Trips Scheduled",
+      "type": "integer"
+     },
+     "trips_with_update": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trips With Update"
+     },
+     "trips_with_vehicle": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trips With Vehicle"
+     }
+    },
+    "required": [
+     "trips_scheduled",
+     "trips_with_update",
+     "trips_with_vehicle",
+     "sampled_at",
+     "by_mode"
+    ],
+    "title": "CoverageOut",
+    "type": "object"
+   },
+   "DelaySummaryOut": {
+    "description": "Predicted delay at the next stop, across running trips. Not on-time performance.",
+    "properties": {
+     "early": {
+      "title": "Early",
+      "type": "integer"
+     },
+     "excluded_implausible": {
+      "title": "Excluded Implausible",
+      "type": "integer"
+     },
+     "late": {
+      "title": "Late",
+      "type": "integer"
+     },
+     "median_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Median S"
+     },
+     "p90_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "P90 S"
+     },
+     "sample_size": {
+      "title": "Sample Size",
+      "type": "integer"
+     },
+     "within_band": {
+      "title": "Within Band",
+      "type": "integer"
+     },
+     "without_delay": {
+      "title": "Without Delay",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "sample_size",
+     "excluded_implausible",
+     "without_delay",
+     "median_s",
+     "p90_s",
+     "early",
+     "within_band",
+     "late"
+    ],
+    "title": "DelaySummaryOut",
+    "type": "object"
+   },
+   "Envelope_MetricsData_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MetricsData"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[MetricsData]",
+    "type": "object"
+   },
+   "Envelope_OverviewData_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/OverviewData"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[OverviewData]",
+    "type": "object"
+   },
+   "Envelope_RouteDetail_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RouteDetail"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[RouteDetail]",
+    "type": "object"
+   },
+   "Envelope_StatusData_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StatusData"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[StatusData]",
+    "type": "object"
+   },
+   "Envelope_TripDetail_": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TripDetail"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[TripDetail]",
+    "type": "object"
+   },
+   "Envelope_list_AlertOut__": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/AlertOut"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[list[AlertOut]]",
+    "type": "object"
+   },
+   "Envelope_list_RouteSummary__": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/RouteSummary"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[list[RouteSummary]]",
+    "type": "object"
+   },
+   "Envelope_list_VehicleOut__": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/VehicleOut"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[list[VehicleOut]]",
+    "type": "object"
+   },
+   "ErrorBody": {
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "message"
+    ],
+    "title": "ErrorBody",
+    "type": "object"
+   },
+   "ErrorResponse": {
+    "properties": {
+     "error": {
+      "$ref": "#/components/schemas/ErrorBody"
+     }
+    },
+    "required": [
+     "error"
+    ],
+    "title": "ErrorResponse",
+    "type": "object"
+   },
+   "FeedMeta": {
+    "properties": {
+     "age_seconds": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Age Seconds"
+     },
+     "anomaly": {
+      "title": "Anomaly",
+      "type": "boolean"
+     },
+     "fetched_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Fetched At"
+     },
+     "source_timestamp": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Timestamp"
+     },
+     "state": {
+      "$ref": "#/components/schemas/Freshness"
+     }
+    },
+    "required": [
+     "state",
+     "source_timestamp",
+     "fetched_at",
+     "age_seconds",
+     "anomaly"
+    ],
+    "title": "FeedMeta",
+    "type": "object"
+   },
+   "FeedName": {
+    "enum": [
+     "vehicle_positions",
+     "trip_updates",
+     "alerts"
+    ],
+    "title": "FeedName",
+    "type": "string"
+   },
+   "FeedStatus": {
+    "properties": {
+     "accepted": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Accepted"
+     },
+     "age_seconds": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Age Seconds"
+     },
+     "anomaly": {
+      "title": "Anomaly",
+      "type": "boolean"
+     },
+     "dropped_stale": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Dropped Stale"
+     },
+     "entity_count": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entity Count"
+     },
+     "fetched_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Fetched At"
+     },
+     "last_attempt_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Attempt At"
+     },
+     "last_attempt_outcome": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Attempt Outcome"
+     },
+     "rejected": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "integer"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rejected"
+     },
+     "source_timestamp": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Timestamp"
+     },
+     "state": {
+      "$ref": "#/components/schemas/Freshness"
+     },
+     "unmatched": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Unmatched"
+     }
+    },
+    "required": [
+     "state",
+     "source_timestamp",
+     "fetched_at",
+     "age_seconds",
+     "anomaly",
+     "entity_count",
+     "accepted",
+     "rejected",
+     "unmatched",
+     "dropped_stale",
+     "last_attempt_at",
+     "last_attempt_outcome"
+    ],
+    "title": "FeedStatus",
+    "type": "object"
+   },
+   "Freshness": {
+    "enum": [
+     "live",
+     "delayed",
+     "stale",
+     "unavailable"
+    ],
+    "title": "Freshness",
+    "type": "string"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "title": "Detail",
+      "type": "array"
+     }
+    },
+    "title": "HTTPValidationError",
+    "type": "object"
+   },
+   "Meta": {
+    "properties": {
+     "feeds": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/FeedMeta"
+      },
+      "propertyNames": {
+       "$ref": "#/components/schemas/FeedName"
+      },
+      "title": "Feeds",
+      "type": "object"
+     },
+     "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+     },
+     "static_version": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StaticMeta"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "generated_at",
+     "feeds",
+     "static_version",
+     "notes"
+    ],
+    "title": "Meta",
+    "type": "object"
+   },
+   "MetricDefinition": {
+    "properties": {
+     "definition": {
+      "title": "Definition",
+      "type": "string"
+     },
+     "limitations": {
+      "title": "Limitations",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "definition",
+     "source",
+     "limitations"
+    ],
+    "title": "MetricDefinition",
+    "type": "object"
+   },
+   "MetricsData": {
+    "properties": {
+     "attribution": {
+      "title": "Attribution",
+      "type": "string"
+     },
+     "disclaimer": {
+      "title": "Disclaimer",
+      "type": "string"
+     },
+     "freshness_limits_seconds": {
+      "additionalProperties": {
+       "additionalProperties": {
+        "type": "integer"
+       },
+       "type": "object"
+      },
+      "propertyNames": {
+       "$ref": "#/components/schemas/FeedName"
+      },
+      "title": "Freshness Limits Seconds",
+      "type": "object"
+     },
+     "metrics": {
+      "items": {
+       "$ref": "#/components/schemas/MetricDefinition"
+      },
+      "title": "Metrics",
+      "type": "array"
+     },
+     "thresholds": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "title": "Thresholds",
+      "type": "object"
+     }
+    },
+    "required": [
+     "metrics",
+     "thresholds",
+     "freshness_limits_seconds",
+     "attribution",
+     "disclaimer"
+    ],
+    "title": "MetricsData",
+    "type": "object"
+   },
+   "OverviewData": {
+    "properties": {
+     "alerts": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/AlertOverview"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "coverage": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CoverageOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trips": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TripOverview"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "vehicles": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/VehicleOverview"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "vehicles",
+     "trips",
+     "alerts",
+     "coverage"
+    ],
+    "title": "OverviewData",
+    "type": "object"
+   },
+   "RouteDetail": {
+    "properties": {
+     "alerts": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/AlertOut"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Alerts"
+     },
+     "route": {
+      "$ref": "#/components/schemas/RouteSummary"
+     },
+     "running_trips": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/TripBrief"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Running Trips"
+     },
+     "vehicles": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/VehicleOut"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Vehicles"
+     }
+    },
+    "required": [
+     "route",
+     "vehicles",
+     "running_trips",
+     "alerts"
+    ],
+    "title": "RouteDetail",
+    "type": "object"
+   },
+   "RouteRef": {
+    "properties": {
+     "long_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Long Name"
+     },
+     "mode": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mode"
+     },
+     "route_id": {
+      "title": "Route Id",
+      "type": "string"
+     },
+     "short_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Short Name"
+     }
+    },
+    "required": [
+     "route_id",
+     "short_name",
+     "long_name",
+     "mode"
+    ],
+    "title": "RouteRef",
+    "type": "object"
+   },
+   "RouteSummary": {
+    "properties": {
+     "alerts_active": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Alerts Active"
+     },
+     "color": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Color"
+     },
+     "long_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Long Name"
+     },
+     "mode": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mode"
+     },
+     "route_id": {
+      "title": "Route Id",
+      "type": "string"
+     },
+     "short_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Short Name"
+     },
+     "text_color": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Text Color"
+     },
+     "trips_running": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trips Running"
+     },
+     "vehicles_fresh": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Vehicles Fresh"
+     }
+    },
+    "required": [
+     "route_id",
+     "short_name",
+     "long_name",
+     "mode",
+     "color",
+     "text_color",
+     "vehicles_fresh",
+     "trips_running",
+     "alerts_active"
+    ],
+    "title": "RouteSummary",
+    "type": "object"
+   },
+   "StaticMeta": {
+    "properties": {
+     "feed_end_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feed End Date"
+     },
+     "feed_start_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feed Start Date"
+     },
+     "published_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Published At"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id",
+     "published_at",
+     "feed_start_date",
+     "feed_end_date"
+    ],
+    "title": "StaticMeta",
+    "type": "object"
+   },
+   "StaticStatus": {
+    "properties": {
+     "feed_end_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feed End Date"
+     },
+     "feed_start_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feed Start Date"
+     },
+     "published_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Published At"
+     },
+     "routes": {
+      "title": "Routes",
+      "type": "integer"
+     },
+     "stops": {
+      "title": "Stops",
+      "type": "integer"
+     },
+     "trips": {
+      "title": "Trips",
+      "type": "integer"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id",
+     "published_at",
+     "feed_start_date",
+     "feed_end_date",
+     "routes",
+     "stops",
+     "trips"
+    ],
+    "title": "StaticStatus",
+    "type": "object"
+   },
+   "StatusData": {
+    "properties": {
+     "feeds": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/FeedStatus"
+      },
+      "propertyNames": {
+       "$ref": "#/components/schemas/FeedName"
+      },
+      "title": "Feeds",
+      "type": "object"
+     },
+     "history_enabled": {
+      "title": "History Enabled",
+      "type": "boolean"
+     },
+     "poll_interval_seconds": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "propertyNames": {
+       "$ref": "#/components/schemas/FeedName"
+      },
+      "title": "Poll Interval Seconds",
+      "type": "object"
+     },
+     "static": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StaticStatus"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "feeds",
+     "static",
+     "poll_interval_seconds",
+     "history_enabled"
+    ],
+    "title": "StatusData",
+    "type": "object"
+   },
+   "StopPredictionOut": {
+    "properties": {
+     "arrival_delay_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Arrival Delay S"
+     },
+     "arrival_time": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Arrival Time"
+     },
+     "departure_delay_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Departure Delay S"
+     },
+     "departure_time": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Departure Time"
+     },
+     "stop": {
+      "$ref": "#/components/schemas/StopRef"
+     },
+     "stop_sequence": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stop Sequence"
+     }
+    },
+    "required": [
+     "stop",
+     "stop_sequence",
+     "arrival_time",
+     "arrival_delay_s",
+     "departure_time",
+     "departure_delay_s"
+    ],
+    "title": "StopPredictionOut",
+    "type": "object"
+   },
+   "StopRef": {
+    "properties": {
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "stop_id": {
+      "title": "Stop Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "stop_id",
+     "name"
+    ],
+    "title": "StopRef",
+    "type": "object"
+   },
+   "TripBrief": {
+    "properties": {
+     "delay_implausible": {
+      "title": "Delay Implausible",
+      "type": "boolean"
+     },
+     "headsign": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Headsign"
+     },
+     "next_stop": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StopRef"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "predicted_delay_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Predicted Delay S"
+     },
+     "relationship": {
+      "title": "Relationship",
+      "type": "string"
+     },
+     "scheduled_start": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Scheduled Start"
+     },
+     "trip_id": {
+      "title": "Trip Id",
+      "type": "string"
+     },
+     "vehicle_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Vehicle Id"
+     }
+    },
+    "required": [
+     "trip_id",
+     "headsign",
+     "relationship",
+     "scheduled_start",
+     "vehicle_id",
+     "predicted_delay_s",
+     "delay_implausible",
+     "next_stop"
+    ],
+    "title": "TripBrief",
+    "type": "object"
+   },
+   "TripDetail": {
+    "properties": {
+     "headsign": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Headsign"
+     },
+     "in_schedule": {
+      "title": "In Schedule",
+      "type": "boolean"
+     },
+     "realtime": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TripRealtime"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "route": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RouteRef"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trip_id": {
+      "title": "Trip Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "trip_id",
+     "in_schedule",
+     "route",
+     "headsign",
+     "realtime"
+    ],
+    "title": "TripDetail",
+    "type": "object"
+   },
+   "TripOverview": {
+    "properties": {
+     "canceled": {
+      "title": "Canceled",
+      "type": "integer"
+     },
+     "delay": {
+      "$ref": "#/components/schemas/DelaySummaryOut"
+     },
+     "delay_by_mode": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/DelaySummaryOut"
+      },
+      "title": "Delay By Mode",
+      "type": "object"
+     },
+     "running": {
+      "title": "Running",
+      "type": "integer"
+     },
+     "running_by_mode": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "Running By Mode",
+      "type": "object"
+     }
+    },
+    "required": [
+     "running",
+     "running_by_mode",
+     "canceled",
+     "delay",
+     "delay_by_mode"
+    ],
+    "title": "TripOverview",
+    "type": "object"
+   },
+   "TripRealtime": {
+    "properties": {
+     "delay_implausible": {
+      "title": "Delay Implausible",
+      "type": "boolean"
+     },
+     "predicted_delay_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Predicted Delay S"
+     },
+     "relationship": {
+      "title": "Relationship",
+      "type": "string"
+     },
+     "running": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Running"
+     },
+     "scheduled_start": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Scheduled Start"
+     },
+     "stops": {
+      "items": {
+       "$ref": "#/components/schemas/StopPredictionOut"
+      },
+      "title": "Stops",
+      "type": "array"
+     },
+     "updated_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updated At"
+     },
+     "vehicle_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Vehicle Id"
+     }
+    },
+    "required": [
+     "relationship",
+     "scheduled_start",
+     "running",
+     "vehicle_id",
+     "updated_at",
+     "predicted_delay_s",
+     "delay_implausible",
+     "stops"
+    ],
+    "title": "TripRealtime",
+    "type": "object"
+   },
+   "ValidationError": {
+    "properties": {
+     "ctx": {
+      "title": "Context",
+      "type": "object"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Location",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Message",
+      "type": "string"
+     },
+     "type": {
+      "title": "Error Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError",
+    "type": "object"
+   },
+   "VehicleOut": {
+    "properties": {
+     "fresh": {
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "headsign": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Headsign"
+     },
+     "label": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Label"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "lon": {
+      "title": "Lon",
+      "type": "number"
+     },
+     "matched": {
+      "title": "Matched",
+      "type": "boolean"
+     },
+     "mode": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mode"
+     },
+     "predicted_delay_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Predicted Delay S"
+     },
+     "reported_at": {
+      "format": "date-time",
+      "title": "Reported At",
+      "type": "string"
+     },
+     "route_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Route Id"
+     },
+     "route_short_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Route Short Name"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "stop": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StopRef"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trip_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trip Id"
+     },
+     "vehicle_id": {
+      "title": "Vehicle Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "vehicle_id",
+     "label",
+     "lat",
+     "lon",
+     "mode",
+     "route_id",
+     "route_short_name",
+     "trip_id",
+     "headsign",
+     "status",
+     "stop",
+     "reported_at",
+     "fresh",
+     "matched",
+     "predicted_delay_s"
+    ],
+    "title": "VehicleOut",
+    "type": "object"
+   },
+   "VehicleOverview": {
+    "properties": {
+     "fresh": {
+      "title": "Fresh",
+      "type": "integer"
+     },
+     "fresh_by_mode": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "Fresh By Mode",
+      "type": "object"
+     },
+     "last_seen": {
+      "title": "Last Seen",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "fresh",
+     "last_seen",
+     "fresh_by_mode"
+    ],
+    "title": "VehicleOverview",
+    "type": "object"
+   }
+  }
+ },
+ "info": {
+  "description": "\nRead-only API for BrisPulse: live public transport conditions in South East Queensland.\n\nEvery response has the same envelope: `data`, and `meta` describing how fresh the\nunderlying feeds are. A value that cannot be given is `null`, never `0`; `meta.notes`\nsays why.\n\nContains Translink data \u00a9 State of Queensland (Department of Transport and Main Roads),\nlicensed under CC BY 4.0. BrisPulse is independent and not endorsed by Translink.\n",
+  "title": "BrisPulse",
+  "version": "0.1.0"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/api/v1/alerts": {
+   "get": {
+    "description": "Service alerts, active ones first.",
+    "operationId": "get_alerts_api_v1_alerts_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "active",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Active"
+      }
+     },
+     {
+      "in": "query",
+      "name": "route_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Route Id"
+      }
+     },
+     {
+      "in": "query",
+      "name": "stop_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Stop Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_list_AlertOut__"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Alerts"
+   }
+  },
+  "/api/v1/meta/metrics": {
+   "get": {
+    "description": "What each figure means, the limits in use, and the data attribution.",
+    "operationId": "get_metric_definitions_api_v1_meta_metrics_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_MetricsData_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Get Metric Definitions"
+   }
+  },
+  "/api/v1/overview": {
+   "get": {
+    "description": "Headline numbers for the network right now.",
+    "operationId": "get_overview_api_v1_overview_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_OverviewData_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Overview"
+   }
+  },
+  "/api/v1/routes": {
+   "get": {
+    "description": "Every route in the schedule, with live counts where live data is available.",
+    "operationId": "get_routes_api_v1_routes_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "mode",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "bus",
+          "rail",
+          "ferry",
+          "tram"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Mode"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_list_RouteSummary__"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Routes"
+   }
+  },
+  "/api/v1/routes/{route_id}": {
+   "get": {
+    "description": "One route: its vehicles, running trips and alerts.",
+    "operationId": "get_route_api_v1_routes__route_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_RouteDetail_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "No such route or trip."
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Route"
+   }
+  },
+  "/api/v1/status": {
+   "get": {
+    "description": "State of each feed, the last fetch attempts and the schedule in use.",
+    "operationId": "get_status_api_v1_status_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_StatusData_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Get Status"
+   }
+  },
+  "/api/v1/trips/{trip_id}": {
+   "get": {
+    "description": "One trip: predicted times and delays at its upcoming stops.",
+    "operationId": "get_trip_api_v1_trips__trip_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "trip_id",
+      "required": true,
+      "schema": {
+       "title": "Trip Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_TripDetail_"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "404": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "No such route or trip."
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Trip"
+   }
+  },
+  "/api/v1/vehicles": {
+   "get": {
+    "description": "Vehicle positions: fresh ones, and \"last seen\" ones unless ``fresh_only`` is set.",
+    "operationId": "get_vehicles_api_v1_vehicles_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "mode",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "bus",
+          "rail",
+          "ferry",
+          "tram"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Mode"
+      }
+     },
+     {
+      "in": "query",
+      "name": "route_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Route Id"
+      }
+     },
+     {
+      "description": "min_lon,min_lat,max_lon,max_lat",
+      "in": "query",
+      "name": "bbox",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "min_lon,min_lat,max_lon,max_lat",
+       "title": "Bbox"
+      }
+     },
+     {
+      "in": "query",
+      "name": "fresh_only",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Fresh Only",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_list_VehicleOut__"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     },
+     "503": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      },
+      "description": "The service is not ready yet."
+     }
+    },
+    "summary": "Get Vehicles"
+   }
+  }
+ }
+}

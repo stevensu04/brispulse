@@ -3,7 +3,7 @@
 **Phase:** M1 — Architecture Validation
 **Author:** Fable 5.2
 **Date:** 2026-11-16
-**Status:** **APPROVED by the product owner on 2026-11-16**, with two items left open: hosting and budget (A5) and contacting TransLink (A6). See §13.
+**Status:** **APPROVED by the product owner on 2026-11-16.** Later the same day the owner decided to release a **live-only** version on free hosting, without stored history: see **§19**, which overrides the sections it names. Contacting TransLink (A6) is still open.
 
 Inputs: [Master Plan](BRISPULSE-MASTER-PLAN.md) · [Audit](BRISPULSE-REPOSITORY-AUDIT.md) · [Data research](BRISPULSE-DATA-SOURCE-RESEARCH.md) · [Metrics](BRISPULSE-METRICS-FEASIBILITY.md) · [MVP requirements](BRISPULSE-MVP-REQUIREMENTS.md) · [Handoff](BRISPULSE-TECHNICAL-HANDOFF.md)
 
@@ -18,7 +18,7 @@ BrisPulse will be **one small always-on service** that polls TransLink's three G
 | Decision | Choice | Main reason |
 | --- | --- | --- |
 | Process model | One always-on process: collector + API together | Polling every 30–60 s and building history needs a process that never sleeps; one process avoids a cache/queue |
-| Backend | Python, FastAPI, Pydantic, SQLAlchemy + Alembic, httpx | Async polling fits in-process; typed validation and a generated OpenAPI contract |
+| Backend | Python, FastAPI, Pydantic, SQLAlchemy + Alembic, httpx2 (originally httpx; changed in M2.1, see the changelog) | Async polling fits in-process; typed validation and a generated OpenAPI contract |
 | Live state | In memory, rebuilt within one poll after restart | It is fully reconstructible from the feeds; persisting it buys nothing |
 | Durable storage | PostgreSQL, history and reference data only | History is a real requirement; percentile functions in SQL; standard and explainable |
 | Static GTFS | Derived subset, versioned; `stop_times` reduced to one span per trip | 4.67 M rows are not needed at runtime |
@@ -188,7 +188,7 @@ All delay figures are **predicted delay at the next stop**, as published by Tran
 | Metric | Definition | Shown as |
 | --- | --- | --- |
 | Active vehicles | Count of fresh vehicles, by mode and route | Number, with the stale count beside it |
-| Active alerts | Alerts with an active period containing now; split into planned (cause construction/maintenance) and other **[P]** | Number and list |
+| Active alerts | Alerts with an active period containing now; those whose cause is construction or maintenance are labelled planned works. The rest are not claimed to be incidents: live data in M2.4 showed planned timetable changes filed under other causes | Number and list |
 | Current network delay | Median and p90 of next-stop delay across running trips, by mode | "Median predicted delay now", with n |
 | Delay bands | Share of running trips early (< −60 s), within band, late (> +300 s) **[P defaults; TransLink's official thresholds not verified]** | Stacked bar with n; never called on-time performance |
 | Route delay distribution (today) | Distribution of **per-trip median delay** across the route's observed trips for the service day | Histogram plus median/p90; hidden when fewer than 5 trips **[P]** |
@@ -316,7 +316,7 @@ Decided by the product owner on 2026-11-16.
 | A2 | Single always-on process, live state in memory | **Approved** |
 | A3 | Metric definitions and thresholds in §6 and §7 | **Approved as starting values;** to be revised after one week of collected data |
 | A4 | C1 include · C2 as labelled delay bands · C3 defer · C4 filters | **Approved** |
-| A5 | Hosting provider and monthly budget | **Open.** Owner to decide later. Blocks only M2.6 (deployment); M2.1–M2.5 run locally. Requirements in §12 |
+| A5 | Hosting provider and monthly budget | **Decided 2026-11-16: no paid hosting.** The first release is live-only on a free host that may sleep (§19). Which free host is still to be chosen |
 | A6 | Contact TransLink about contact details and attribution | **Open.** Owner action, required before public launch |
 | A7 | Monorepo layout: `backend/`, `frontend/`, `docs/`, `discovery/` in this repository | **Approved** |
 
@@ -360,14 +360,14 @@ A critical pass over the design above, written after approval. Items marked **Ga
 | W1 | The evidence is three snapshots from 36 minutes of one weekday morning. Every threshold and volume estimate could be wrong for nights, weekends and disruptions. | Risk | The 24 h run (M2.3) and first-week review (M2.6) are mandatory gates, not optional |
 | W2 | **No backup or restore plan for PostgreSQL.** Collected history cannot be re-downloaded: upstream keeps none. | **Gap** | Add scheduled database dumps to M2.6 and test one restore; depends on the hosting choice (A5) |
 | W3 | **Nobody is told when the collector stops.** `/status` shows it, but only if someone looks. | **Gap** | Add an external uptime check on `/status` with a notification to the owner, in M2.6 |
-| W4 | Single process: a crash or deploy stops collection, and up to 5 minutes of per-trip samples are lost between checkpoints. | Accepted limit | Gaps are recorded as gaps; state the limit publicly |
-| W5 | Upstream gaps of 30 s were observed. With a 30 s poll, a vehicle position can be about 60 s old on arrival, leaving a thin margin under the 90 s `live` limit; the state may flicker between `live` and `delayed`. | Risk | Measure in M2.3; if it flickers, poll VehiclePositions every 15–20 s or add hysteresis |
-| W6 | A 60 s TripUpdates poll gives few observations for short trips, so a per-trip median can rest on one or two samples. | Risk | Require a minimum number of observations (3 **[P]**) before a trip enters route statistics; store the count (already in `trip_record`) |
+| W4 | Single process: a crash or deploy stops collection, and up to 5 minutes of per-trip samples are lost between checkpoints. | Accepted limit | Gaps are recorded as gaps; state the limit publicly. Since M2.5 a clean shutdown writes in-flight trips and a start-up resumes them (verified live: 673 resumed, none lost observations); only a crash can lose up to five minutes |
+| W5 | Upstream gaps of 30 s were observed. With a 30 s poll, a vehicle position can be about 60 s old on arrival, leaving a thin margin under the 90 s `live` limit; the state may flicker between `live` and `delayed`. | Risk | Partly measured in M2.3: over 323 vehicle-position fetches the data was at most 36 s old when fetched, so with a 30 s poll it stays under about 66 s. No change needed so far; confirm on the 24-hour run |
+| W6 | A 60 s TripUpdates poll gives few observations for short trips, so a per-trip median can rest on one or two samples. | Risk | Require a minimum number of observations (3 **[P]**) before a trip enters route statistics; store the count (already in `trip_record`). Implemented in M2.5's rollup |
 | W7 | `trip_record` is keyed by service date and trip ID. Whether trip IDs stay stable when the static feed is republished mid-day is unverified. | Assumption | Store the static version on each record (already planned); check at the first observed republish |
-| W8 | Retention deletes `trip_record` rows after 35 days. If the nightly rollup was wrong, the source is gone. | Risk | Rollup must be verified against raw rows in tests; delete only days whose rollup exists |
-| W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption | Measure in M2.3 and after one week |
-| W10 | **Rate limiting is unspecified.** A public, unauthenticated API can be scraped; only cache headers protect it. | **Gap** | Decide in M2.4: a simple per-IP limit in the app, or at the host's proxy |
-| W11 | The basemap tile provider is undecided; it is a third-party dependency with its own terms and limits. | **Gap** | Decide in M3 before building the map |
+| W8 | Retention deletes `trip_record` rows after 35 days. If the nightly rollup was wrong, the source is gone. | Risk | Rollup must be verified against raw rows in tests; delete only days whose rollup exists. Implemented and tested in M2.5 |
+| W9 | Memory need (512 MB) and database growth are estimates, not measurements. | Assumption, partly measured | M2.2 measured the static import at about 240 MB peak and 50 MB of database per version. M2.3 measured the running service at 92–100 MB over 4 h 20 min with no growth, and the fetch log at about 2 MB per day. M2.4 raised it to about 140 MB by holding route, stop and trip names in memory. Still to measure: a full day, and history tables (M2.5) |
+| W10 | **Rate limiting is unspecified.** A public, unauthenticated API can be scraped; only cache headers protect it. | **Gap** | Decided in M2.4: not in the application. Responses come from memory in milliseconds with cache headers; a per-IP limit belongs at the host's proxy and is set with the hosting choice (A5) |
+| W11 | The basemap tile provider is undecided; it is a third-party dependency with its own terms and limits. | **Gap** | Decided in M3: OpenFreeMap (OpenStreetMap data, free, no key or account, attribution shown by the map). It has no service guarantee; vehicles still draw if it is unreachable |
 | W12 | The web app is served from the same container, with no CDN. | Accepted limit | Fine at MVP traffic; can move to a static host later without API changes if CORS is enabled |
 | W13 | Several thresholds (delay bands, anomaly at 20 %, trend minimum of 7 days) are judgement calls. | Assumption | Kept in configuration and published in `/api/v1/meta/metrics`; reviewed after one week |
 | W14 | Real feed files used as test fixtures are TransLink data. | Compliance | Keep them small, attribute them in the repository, per CC BY 4.0 |
@@ -389,3 +389,44 @@ There was no application code to preserve (confirmed by the owner). What carries
 | Prototype screenshot's visual language (dark theme, status colours) | Design reference only; colours must be redefined for delay before reuse |
 | Spatial-pressure scoring, calmer-route recommendations, spatial-equity guardrails, Wi-Fi and gate-egress data | Not carried into the MVP (Master Plan §3.2; no verified data). Recorded as the project's origin, for the case study |
 | Portfolio page and `/world` scene in the resume repository | Untouched; to be updated by the owner's decision once there is something real to show |
+
+## 19. Live-only deployment (owner decision, 2026-11-16)
+
+### 19.1 The decision
+After M2.5 the owner compared hosting costs (about US$5-8 a month for anything that stays on all day) and chose **not to pay for hosting**. The first release is therefore a live dashboard only. This is a change of MVP scope, recorded as Amendment 1 in the Master Plan.
+
+### 19.2 What it changes
+| Area | Approved design (§3-§7) | Live-only release |
+| --- | --- | --- |
+| Host | Always-on container | A free host that stops the service when idle and starts it on a visit |
+| Database | PostgreSQL | **None** |
+| Schedule | Imported into the database by a subprocess | Read straight from TransLink's zip at start-up, into memory |
+| Fetch log | One row per fetch | Not kept; failures still go to the process log |
+| History | Trip records, network samples, alerts, daily rollups | **Off** |
+| Real-time coverage | From each network sample | **Not available** (it needs trip time spans, which are not loaded) |
+| Trends, route statistics | Planned for M4 | **Out of the first release** |
+| Live monitoring: vehicles, running trips, predicted delay, alerts, freshness | As designed | **Unchanged** |
+
+### 19.3 How it works
+- The service decides its shape from configuration: with no `DATABASE_URL` it runs live-only; with one it runs the full design. No code is removed, so adding a database later restores history without a rewrite.
+- At start-up it downloads the schedule zip and reads only `routes.txt`, `stops.txt` and `trips.txt`. `stop_times.txt` (4.67 million rows) is never opened.
+- The HTTP application answers immediately and reports that it is loading; the collector looks for the schedule every 2 s and starts polling the moment it is there.
+- The API says what it is: `/api/v1/status` has `history_enabled: false`, and the overview's coverage is `null` with a note giving the reason.
+
+### 19.4 Measured (local machine against live TransLink, 2026-11-16 20:28 AEST)
+| From process start | Seconds |
+| --- | --- |
+| HTTP answering | 1.6 |
+| Schedule loaded (43 MB download, 553 routes, 13,125 stops, 173,183 trips) | 10.9 |
+| All three feeds live | 12.4 |
+
+Memory was about 150 MB. Run as the Docker image with a 256 MB memory limit, the service was live 5.7 s after the container started and used 106 MiB, so a 256 MB instance is enough. A free host's own wake-up time comes on top of this and has not been measured.
+
+### 19.5 Consequences and limits
+- **A visitor arriving after an idle period waits** for the host to wake and then about 12 s for data. The web app must show a clear "starting up" state (M3).
+- **Nothing accumulates.** No trends can ever be shown from this deployment, and the 24-hour live run planned in §14 does not apply.
+- **Polling only happens while the service is awake**, so TransLink is contacted only when someone is using the dashboard.
+- The schedule is downloaded on every start. If TransLink's file is unavailable at that moment, the dashboard stays in its loading state and retries every 30 s.
+- §17 items W2 (database backups) and W8 (retention) do not apply while there is no database. W3 (nobody is told when collection stops) matters less: there is no history to lose.
+- **Not yet chosen or verified:** which free host, its memory limit (the service needs about 150 MB), its wake-up time, and whether it has a region near Australia.
+
